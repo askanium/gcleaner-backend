@@ -33,8 +33,10 @@ def test_google_resource_get_nr_of_unread_emails(mocker):
     google_api_service.service = mocker.Mock()
     google_api_service.service.users.return_value.messages.return_value.list.return_value.execute.return_value = response
 
+    # method call
     unread_emails = google_api_service.get_unread_emails_since_date(dt)
 
+    # assertions
     google_api_service.service\
         .users.return_value\
         .messages.return_value\

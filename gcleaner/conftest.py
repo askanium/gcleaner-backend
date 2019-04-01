@@ -1,4 +1,5 @@
 import pytest
+from google.oauth2.credentials import Credentials
 
 from gcleaner.emails.models import Label, Email
 from gcleaner.users.models import User
@@ -38,3 +39,9 @@ def email(user, label_unread, label_inbox, db):
     email.labels.add(label_unread)
     email.labels.add(label_inbox)
     return email
+
+
+@pytest.fixture
+def google_credentials():
+    credentials = Credentials('token', refresh_token='refresh_token')
+    return credentials

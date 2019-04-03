@@ -22,7 +22,8 @@ def test_email_model_from_dict(user, label_inbox, label_unread):
         'delivered_to': 'Delivered To',
         'starred': False,
         'important': False,
-        'date': '2019-03-19 10:31:21+00:00'
+        'date': '2019-03-19 10:31:21+00:00',
+        'list_unsubscribe': '<mailto:unsubscribe@example.com>'
     })
 
     assert email.pk is not None
@@ -37,6 +38,7 @@ def test_email_model_from_dict(user, label_inbox, label_unread):
     assert email.starred is False
     assert email.important is False
     assert email.date == '2019-03-19 10:31:21+00:00'
+    assert email.list_unsubscribe == '<mailto:unsubscribe@example.com>'
     assert list(email.labels.all().values('google_id', 'user')) == [
         {
             'google_id': label_inbox.google_id,

@@ -43,6 +43,7 @@ class Email(models.Model):
     starred = models.BooleanField(default=False)
     important = models.BooleanField(default=False)
     date = models.DateTimeField()
+    list_unsubscribe = models.TextField(blank=True)
 
     def __str__(self):
         return "<Email %s>" % self.google_id
@@ -64,7 +65,8 @@ class Email(models.Model):
                                    delivered_to=obj['delivered_to'],
                                    starred=obj['starred'],
                                    important=obj['important'],
-                                   date=obj['date'])
+                                   date=obj['date'],
+                                   list_unsubscribe=obj.get('list_unsubscribe', ''))
         for label_id in obj['labels']:
             label = Label.objects.get(user_id=obj['user'], google_id=label_id)
             email.labels.add(label)

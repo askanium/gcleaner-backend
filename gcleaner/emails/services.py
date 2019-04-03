@@ -15,7 +15,7 @@ class GoogleAPIService(object):
         self.credentials = credentials
         self.service = build('gmail', 'v1', credentials=credentials)
 
-    def get_labeled_emails_since_date(self, labels, d):
+    def get_labeled_emails(self, labels, d):
         """
         Retrieve a list of emails from GMail API.
 
@@ -27,25 +27,31 @@ class GoogleAPIService(object):
         query keyword argument `q`.
 
         :param {list} labels: A list of label ids that the emails have to have.
-        :param {str} d: The earliest date to retrieve emails from.
+        :param {str} d: (Optional) The earliest date to retrieve emails from.
 
         :return: The list of emails from GMail API.
         """
-        response = self.service.users().messages().list(userId='me',
-                                                        labelIds=labels,
-                                                        maxResults=1000,
-                                                        q='after:{}'.format(d)).execute()
+        list_filters = {
+            'userId': 'me',
+            'labelIds': labels,
+            'maxResults': 1000
+        }
+
+        if d:
+            list_filters['q'] = 'after:{}'.format(d)
+
+        response = self.service.users().messages().list(**list_filters).execute()
         return response['messages']
 
-    def get_unread_emails_since_date(self, d):
+    def get_unread_emails(self, d=None):
         """
         Retrieve a list of Unread emails from GMail API.
 
-        :param {str} d: The earliest date to retrieve emails from.
+        :param {str} d: (Optional) The earliest date to retrieve emails from.
 
         :return: The list of unread emails from GMail API.
         """
-        return self.get_labeled_emails_since_date(['UNREAD'], d)
+        return self.get_labeled_emails(['UNREAD'], d)
 
     def get_emails_details(self, emails, callback):
         """
@@ -71,3 +77,12 @@ class GoogleAPIService(object):
             batch.add(get_request)
 
         batch.execute()
+
+
+class EmailService(object):
+    """
+
+    """
+    def __init__(self, credentials):
+        self.gmail_service = GoogleAPIService(credentials)
+

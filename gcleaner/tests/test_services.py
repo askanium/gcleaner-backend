@@ -16,7 +16,7 @@ def test_google_resource_service_initialization(google_credentials):
     assert isinstance(google_api_service.service, Resource)
 
 
-def test_google_resource_get_nr_of_unread_emails(mocker, google_credentials):
+def test_google_resource_get_nr_of_unread_emails_since_a_specific_date(mocker, google_credentials):
     label_ids = ['UNREAD']
     emails = [
         {'id': 'a1'},
@@ -31,13 +31,37 @@ def test_google_resource_get_nr_of_unread_emails(mocker, google_credentials):
     google_api_service.service.users.return_value.messages.return_value.list.return_value.execute.return_value = response
 
     # method call
-    unread_emails = google_api_service.get_unread_emails_since_date(dt)
+    unread_emails = google_api_service.get_unread_emails(dt)
 
     # assertions
     google_api_service.service\
         .users.return_value\
         .messages.return_value\
         .list.assert_called_once_with(userId='me', labelIds=label_ids, maxResults=1000, q='after:{}'.format(dt))
+    assert unread_emails == emails
+
+
+def test_google_resource_get_nr_of_unread_emails_from_the_beginning_of_time(mocker, google_credentials):
+    label_ids = ['UNREAD']
+    emails = [
+        {'id': 'a1'},
+        {'id': 'a2'}
+    ]
+    response = {
+        'messages': emails
+    }
+    google_api_service = GoogleAPIService(google_credentials)
+    google_api_service.service = mocker.Mock()
+    google_api_service.service.users.return_value.messages.return_value.list.return_value.execute.return_value = response
+
+    # method call
+    unread_emails = google_api_service.get_unread_emails()
+
+    # assertions
+    google_api_service.service\
+        .users.return_value\
+        .messages.return_value\
+        .list.assert_called_once_with(userId='me', labelIds=label_ids, maxResults=1000)
     assert unread_emails == emails
 
 

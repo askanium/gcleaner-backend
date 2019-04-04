@@ -102,10 +102,12 @@ def test_google_resource_create_and_run_a_batch_api_call(mocker, google_credenti
         call(userId='me',
              id='a1',
              fields=settings.GOOGLE_AUTH_SETTINGS['MESSAGE_FIELDS'],
+             format='metadata',
              metadataHeaders=settings.GOOGLE_AUTH_SETTINGS['METADATA_HEADERS']),
         call(userId='me',
              id='a2',
              fields=settings.GOOGLE_AUTH_SETTINGS['MESSAGE_FIELDS'],
+             format='metadata',
              metadataHeaders=settings.GOOGLE_AUTH_SETTINGS['METADATA_HEADERS'])
     ]
     google_api_service.service\

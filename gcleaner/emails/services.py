@@ -93,6 +93,7 @@ class GoogleAPIService(object):
             get_request = self.service.users().messages().get(userId='me',
                                                               id=email['id'],
                                                               fields=settings.GOOGLE_AUTH_SETTINGS['MESSAGE_FIELDS'],
+                                                              format='metadata',
                                                               metadataHeaders=settings.GOOGLE_AUTH_SETTINGS['METADATA_HEADERS'])
             batch.add(get_request)
 

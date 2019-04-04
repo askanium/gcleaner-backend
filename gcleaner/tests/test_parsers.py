@@ -1,8 +1,8 @@
 from gcleaner.emails.parsers import GMailEmailParser
 
 
-def test_gmail_parser_parses_response_object_that_contains_all_fields(gmail_api_response):
-    email = gmail_api_response[-1]  # last email contains 'List-Unsubscribe' header as well
+def test_gmail_parser_parses_response_object_that_contains_all_fields(gmail_api_get_3_response):
+    email = gmail_api_get_3_response  # it contains 'List-Unsubscribe' header as well
     expected = {
         "google_id": "1599518a6f32a3b1",
         "thread_id": "1599518a6f32a3b1",
@@ -26,8 +26,8 @@ def test_gmail_parser_parses_response_object_that_contains_all_fields(gmail_api_
     assert parsed == expected
 
 
-def test_gmail_parser_parses_response_object_without_all_metadata_headers(gmail_api_response):
-    email = gmail_api_response[0]  # first email does not contain 'List-Unsubscribe' header
+def test_gmail_parser_parses_response_object_without_all_metadata_headers(gmail_api_get_1_response):
+    email = gmail_api_get_1_response  # it does not contain 'List-Unsubscribe' header
     expected = {
         "google_id": "1599581458cf8986",
         "thread_id": "1599581458cf8986",

@@ -61,9 +61,8 @@ def google_credentials():
 
 
 @pytest.fixture
-def gmail_api_response():
-    emails = [
-        {
+def gmail_api_get_1_response():
+    return {
             "id": "1599581458cf8986",
             "threadId": "1599581458cf8986",
             "labelIds": [
@@ -176,8 +175,12 @@ def gmail_api_response():
                     }
                 ]
             }
-        },
-        {
+        }
+
+
+@pytest.fixture
+def gmail_api_get_2_response():
+    return {
             "id": "159951b16a5c5591",
             "threadId": "159951b16a5c5591",
             "labelIds": [
@@ -299,8 +302,12 @@ def gmail_api_response():
                     }
                 ]
             }
-        },
-        {
+        }
+
+
+@pytest.fixture
+def gmail_api_get_3_response():
+    return {
             "id": "1599518a6f32a3b1",
             "threadId": "1599518a6f32a3b1",
             "labelIds": [
@@ -497,9 +504,6 @@ def gmail_api_response():
                 ]
             }
         }
-    ]
-
-    return emails
 
 
 @pytest.fixture

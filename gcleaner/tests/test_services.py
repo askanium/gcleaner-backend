@@ -44,7 +44,7 @@ def test_google_resource_get_nr_of_unread_emails_since_a_specific_date(mocker, g
     google_api_service.service.users.return_value.messages.return_value.list.return_value.execute.return_value = response
 
     # method call
-    unread_emails = google_api_service.get_unread_emails(dt)
+    unread_emails = google_api_service.get_unread_emails_ids(dt)
 
     # assertions
     google_api_service.service\
@@ -68,7 +68,7 @@ def test_google_resource_get_nr_of_unread_emails_from_the_beginning_of_time(mock
     google_api_service.service.users.return_value.messages.return_value.list.return_value.execute.return_value = response
 
     # method call
-    unread_emails = google_api_service.get_unread_emails()
+    unread_emails = google_api_service.get_unread_emails_ids()
 
     # assertions
     google_api_service.service\
@@ -141,7 +141,7 @@ def test_email_service_retrieve_number_of_emails_a_user_has(mocker, google_crede
     user.emails.all.return_value.count.return_value = 0
     service = EmailService(credentials=google_credentials, user=user)
     service.gmail_service = mocker.Mock()
-    service.gmail_service.get_unread_emails.return_value = gmail_api_list_response
+    service.gmail_service.get_unread_emails_ids.return_value = gmail_api_list_response
     service.get_date_to_retrieve_new_emails = mocker.Mock()
     service.get_date_to_retrieve_new_emails.return_value = None
 
@@ -152,14 +152,14 @@ def test_email_service_retrieve_number_of_emails_a_user_has(mocker, google_crede
     assert response['gmail'] == 3
     assert response['local'] == 0
     service.get_date_to_retrieve_new_emails.assert_called_once_with()
-    service.gmail_service.get_unread_emails.assert_called_once_with(None)
+    service.gmail_service.get_unread_emails_ids.assert_called_once_with(None)
     user.emails.all.return_value.count.assert_called_once_with()
 
 
 def test_email_service_retrieve_number_of_emails_a_user_has_when_there_are_existing_db_emails(mocker, latest_email, google_credentials, gmail_api_list_response):
     service = EmailService(credentials=google_credentials, user=latest_email.user)
     service.gmail_service = mocker.Mock()
-    service.gmail_service.get_unread_emails.return_value = gmail_api_list_response
+    service.gmail_service.get_unread_emails_ids.return_value = gmail_api_list_response
 
     # method call
     response = service.retrieve_nr_of_unread_emails()
@@ -167,4 +167,4 @@ def test_email_service_retrieve_number_of_emails_a_user_has_when_there_are_exist
     # assertions
     assert response['gmail'] == 3
     assert response['local'] == 1
-    service.gmail_service.get_unread_emails.assert_called_once_with('2019-03-19')
+    service.gmail_service.get_unread_emails_ids.assert_called_once_with('2019-03-19')

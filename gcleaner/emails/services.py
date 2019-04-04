@@ -63,7 +63,7 @@ class GoogleAPIService(object):
             print('An error occurred: %s' % error)
             return []
 
-    def get_unread_emails(self, d=None):
+    def get_unread_emails_ids(self, d=None):
         """
         Retrieve a list of Unread emails from GMail API.
 
@@ -137,7 +137,7 @@ class EmailService(object):
         date = self.get_date_to_retrieve_new_emails()
 
         nr_of_local_emails = self.user.emails.all().count()
-        nr_of_gmail_emails = len(self.gmail_service.get_unread_emails(date))
+        nr_of_gmail_emails = len(self.gmail_service.get_unread_emails_ids(date))
 
         response['gmail'] = nr_of_gmail_emails
         response['local'] = nr_of_local_emails

@@ -4,6 +4,7 @@ from django.conf import settings
 
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import Resource
+from googleapiclient.errors import HttpError
 from mock import call
 
 from gcleaner.emails.services import GoogleAPIService, EmailService
@@ -14,6 +15,18 @@ def test_google_resource_service_initialization(google_credentials):
 
     assert isinstance(google_api_service.credentials, Credentials)
     assert isinstance(google_api_service.service, Resource)
+
+
+def test_google_resource_service_get_labeled_emails_handles_exception(mocker, google_credentials):
+    google_api_service = GoogleAPIService(google_credentials)
+    google_api_service.service = mocker.Mock()
+    google_api_service.service.users.return_value.messages.return_value.list.return_value.execute.side_effect = mocker.Mock(side_effect=HttpError(mocker.Mock(), b''))
+
+    # method call
+    messages = google_api_service.get_labeled_emails(['UNREAD'], None)
+
+    # assertions
+    assert messages == []
 
 
 def test_google_resource_get_nr_of_unread_emails_since_a_specific_date(mocker, google_credentials):

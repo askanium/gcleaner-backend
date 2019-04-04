@@ -61,6 +61,7 @@ class GoogleAPIService(object):
         except errors.HttpError as error:
             # TODO properly handle API errors
             print('An error occurred: %s' % error)
+            return []
 
     def get_unread_emails(self, d=None):
         """

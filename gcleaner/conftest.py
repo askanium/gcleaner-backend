@@ -24,6 +24,12 @@ def label_inbox(user, db):
 
 
 @pytest.fixture
+def label_category_personal(user, db):
+    label = Label.objects.create(user=user, google_id='CATEGORY_PERSONAL', name='CATEGORY_PERSONAL')
+    return label
+
+
+@pytest.fixture
 def email(user, label_unread, label_inbox, db):
     email = Email.objects.create(user=user,
                                  google_id='a123',
@@ -58,7 +64,7 @@ def gmail_api_response():
                 "CATEGORY_PERSONAL",
                 "INBOX"
             ],
-            "snippet": "GmailCleaner connected to your Google Account Hi iulian, GmailCleaner now has access to your Google Account me@email.com. GmailCleaner can: View and modify but not delete your email You",
+            "snippet": "GmailCleaner connected to your Google Account",
             "payload": {
                 "headers": [
                     {
@@ -170,7 +176,8 @@ def gmail_api_response():
             "labelIds": [
                 "CATEGORY_PROMOTIONS",
                 "UNREAD",
-                "INBOX"
+                "INBOX",
+                "Label_35"
             ],
             "snippet": "Promotion! Promotion! Promotion!",
             "payload": {
@@ -290,10 +297,8 @@ def gmail_api_response():
             "id": "1599518a6f32a3b1",
             "threadId": "1599518a6f32a3b1",
             "labelIds": [
-                "CATEGORY_PROMOTIONS",
                 "UNREAD",
-                "INBOX",
-                "Label_35"
+                "INBOX"
             ],
             "snippet": "Amazon Web Services Only 1 week until AWSome Day Online Conference starts.",
             "payload": {

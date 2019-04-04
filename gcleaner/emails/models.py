@@ -63,8 +63,8 @@ class Email(models.Model):
                                    sender=obj['sender'],
                                    receiver=obj['receiver'],
                                    delivered_to=obj['delivered_to'],
-                                   starred=obj['starred'],
-                                   important=obj['important'],
+                                   starred=obj.get('starred', False),
+                                   important=obj.get('important', False),
                                    date=obj['date'],
                                    list_unsubscribe=obj.get('list_unsubscribe', ''))
         for label_id in obj['labels']:

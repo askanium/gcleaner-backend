@@ -1,6 +1,9 @@
 from django.conf import settings
 
+from googleapiclient import errors
 from googleapiclient.discovery import build
+
+from gcleaner.emails.models import LatestEmail
 
 
 class GoogleAPIService(object):
@@ -40,8 +43,24 @@ class GoogleAPIService(object):
         if d:
             list_filters['q'] = 'after:{}'.format(d)
 
-        response = self.service.users().messages().list(**list_filters).execute()
-        return response['messages']
+        try:
+            response = self.service.users().messages().list(**list_filters).execute()
+
+            messages = []
+            if 'messages' in response:
+                messages.extend(response['messages'])
+
+            while 'nextPageToken' in response:
+                page_token = response['nextPageToken']
+                list_filters['pageToken'] = page_token
+                response = self.service.users().messages().list(**list_filters).execute()
+                messages.extend(response['messages'])
+
+            return messages
+
+        except errors.HttpError as error:
+            # TODO properly handle API errors
+            print('An error occurred: %s' % error)
 
     def get_unread_emails(self, d=None):
         """
@@ -83,6 +102,43 @@ class EmailService(object):
     """
 
     """
-    def __init__(self, credentials):
+    def __init__(self, credentials, user):
         self.gmail_service = GoogleAPIService(credentials)
+        self.user = user
 
+    def get_date_to_retrieve_emails(self):
+        """
+        Compute the starting date since when GMail API should send unread emails
+        :return: Date of the latest email in the database or None.
+        """
+        try:
+            latest_email = LatestEmail.objects.get(user=self.user)
+            date = latest_email.email.date.strftime('%Y-%m-%d')
+        except LatestEmail.DoesNotExist:
+            date = None
+
+        return date
+
+    def retrieve_nr_of_unread_emails(self):
+        """
+        Retrieve number of unread emails locally and that are new from GMail servers.
+
+        Because GMail has a restriction in terms of the load on their servers,
+        retrieving more than 50 emails requires throttling locally API calls.
+
+        In order for a better UX, this method computes the amount of emails that
+        are already retrieved from GMail API and stored in the DB *and* the new
+        emails that are on GMail servers but not locally.
+        :return:
+        """
+        response = {}
+
+        date = self.get_date_to_retrieve_emails()
+
+        nr_of_local_emails = self.user.emails.all().count()
+        nr_of_gmail_emails = len(self.gmail_service.get_unread_emails(date))
+
+        response['gmail'] = nr_of_gmail_emails
+        response['local'] = nr_of_local_emails
+
+        return response

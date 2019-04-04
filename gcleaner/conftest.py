@@ -1,7 +1,7 @@
 import pytest
 from google.oauth2.credentials import Credentials
 
-from gcleaner.emails.models import Label, Email
+from gcleaner.emails.models import Label, Email, LatestEmail
 from gcleaner.users.models import User
 
 
@@ -45,6 +45,13 @@ def email(user, label_unread, label_inbox, db):
     email.labels.add(label_unread)
     email.labels.add(label_inbox)
     return email
+
+
+@pytest.fixture
+def latest_email(email, user):
+    latest_email = LatestEmail.objects.create(user=user, email=email)
+
+    return latest_email
 
 
 @pytest.fixture
@@ -489,6 +496,26 @@ def gmail_api_response():
                     }
                 ]
             }
+        }
+    ]
+
+    return emails
+
+
+@pytest.fixture
+def gmail_api_list_response():
+    emails = [
+        {
+            "id": "1599581458cf8986",
+            "threadId": "1599581458cf8986"
+        },
+        {
+            "id": "159951b16a5c5591",
+            "threadId": "159951b16a5c5591"
+        },
+        {
+            "id": "1599518a6f32a3b1",
+            "threadId": "1599518a6f32a3b1"
         }
     ]
 

@@ -123,7 +123,7 @@ def test_google_resource_create_and_run_a_batch_api_call(mocker, google_credenti
 def test_email_service_get_date_to_retrieve_emails_returns_none_if_no_latest_email(user, google_credentials):
     service = EmailService(credentials=google_credentials, user=user)
 
-    date = service.get_date_to_retrieve_emails()
+    date = service.get_date_to_retrieve_new_emails()
 
     assert date is None
 
@@ -131,7 +131,7 @@ def test_email_service_get_date_to_retrieve_emails_returns_none_if_no_latest_ema
 def test_email_service_get_date_to_retrieve_emails_returns_date_of_latest_email(latest_email, user, google_credentials):
     service = EmailService(credentials=google_credentials, user=latest_email.user)
 
-    date = service.get_date_to_retrieve_emails()
+    date = service.get_date_to_retrieve_new_emails()
 
     assert date == '2019-03-19'
 
@@ -142,8 +142,8 @@ def test_email_service_retrieve_number_of_emails_a_user_has(mocker, google_crede
     service = EmailService(credentials=google_credentials, user=user)
     service.gmail_service = mocker.Mock()
     service.gmail_service.get_unread_emails.return_value = gmail_api_list_response
-    service.get_date_to_retrieve_emails = mocker.Mock()
-    service.get_date_to_retrieve_emails.return_value = None
+    service.get_date_to_retrieve_new_emails = mocker.Mock()
+    service.get_date_to_retrieve_new_emails.return_value = None
 
     # method call
     response = service.retrieve_nr_of_unread_emails()
@@ -151,7 +151,7 @@ def test_email_service_retrieve_number_of_emails_a_user_has(mocker, google_crede
     # assertions
     assert response['gmail'] == 3
     assert response['local'] == 0
-    service.get_date_to_retrieve_emails.assert_called_once_with()
+    service.get_date_to_retrieve_new_emails.assert_called_once_with()
     service.gmail_service.get_unread_emails.assert_called_once_with(None)
     user.emails.all.return_value.count.assert_called_once_with()
 

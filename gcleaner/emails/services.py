@@ -107,7 +107,7 @@ class EmailService(object):
         self.gmail_service = GoogleAPIService(credentials)
         self.user = user
 
-    def get_date_to_retrieve_emails(self):
+    def get_date_to_retrieve_new_emails(self):
         """
         Compute the starting date since when GMail API should send unread emails
         :return: Date of the latest email in the database or None.
@@ -134,7 +134,7 @@ class EmailService(object):
         """
         response = {}
 
-        date = self.get_date_to_retrieve_emails()
+        date = self.get_date_to_retrieve_new_emails()
 
         nr_of_local_emails = self.user.emails.all().count()
         nr_of_gmail_emails = len(self.gmail_service.get_unread_emails(date))

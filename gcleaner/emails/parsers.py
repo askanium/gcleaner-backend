@@ -10,14 +10,14 @@ class GMailEmailParser(object):
     an Email instance.
     """
 
-    google_to_local_props = {
+    _google_to_local_props = {
         'id': 'google_id',
         'threadId': 'thread_id',
         'labelIds': 'labels',
         'snippet': 'snippet'
     }
 
-    google_to_local_metadata_props = {
+    _google_to_local_metadata_props = {
         'Delivered-To': 'delivered_to',
         'Date': 'date',
         'Subject': 'subject',
@@ -39,12 +39,12 @@ class GMailEmailParser(object):
         result = {}
 
         for key, value in email.items():
-            if key in cls.google_to_local_props:
-                result[cls.google_to_local_props[key]] = value
+            if key in cls._google_to_local_props:
+                result[cls._google_to_local_props[key]] = value
             elif key == 'payload':
                 for header in value['headers']:
                     if header['name'] in settings.GOOGLE_AUTH_SETTINGS['METADATA_HEADERS']:
-                        local_header_name = cls.google_to_local_metadata_props[header['name']]
+                        local_header_name = cls._google_to_local_metadata_props[header['name']]
                         result[local_header_name] = header['value']
 
         return result

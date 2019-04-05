@@ -1,3 +1,5 @@
+import datetime
+
 from gcleaner.emails.models import Email
 from gcleaner.users.models import User
 
@@ -22,7 +24,7 @@ def test_email_model_from_dict(user, label_inbox, label_unread):
         'delivered_to': 'Delivered To',
         'starred': True,
         'important': False,
-        'date': '2019-03-19 10:31:21+00:00',
+        'date': datetime.datetime(2019, 3, 19, 10, 31, 21, tzinfo=datetime.timezone.utc),
         'list_unsubscribe': '<mailto:unsubscribe@example.com>'
     })
 
@@ -37,7 +39,7 @@ def test_email_model_from_dict(user, label_inbox, label_unread):
     assert email.delivered_to == 'Delivered To'
     assert email.starred is True
     assert email.important is False
-    assert email.date == '2019-03-19 10:31:21+00:00'
+    assert email.date == datetime.datetime(2019, 3, 19, 10, 31, 21, tzinfo=datetime.timezone.utc)
     assert email.list_unsubscribe == '<mailto:unsubscribe@example.com>'
     assert list(email.labels.all().values('google_id', 'user')) == [
         {
@@ -62,7 +64,7 @@ def test_email_model_from_dict_with_missing_boolean_props(user, label_inbox, lab
         'sender': 'Sender',
         'receiver': 'Receiver',
         'delivered_to': 'Delivered To',
-        'date': '2019-03-19 10:31:21+00:00',
+        'date': datetime.datetime(2019, 3, 19, 10, 31, 21, tzinfo=datetime.timezone.utc),
         'list_unsubscribe': '<mailto:unsubscribe@example.com>'
     })
 
@@ -77,7 +79,7 @@ def test_email_model_from_dict_with_missing_boolean_props(user, label_inbox, lab
     assert email.delivered_to == 'Delivered To'
     assert email.starred is False
     assert email.important is False
-    assert email.date == '2019-03-19 10:31:21+00:00'
+    assert email.date == datetime.datetime(2019, 3, 19, 10, 31, 21, tzinfo=datetime.timezone.utc)
     assert email.list_unsubscribe == '<mailto:unsubscribe@example.com>'
     assert list(email.labels.all().values('google_id', 'user')) == [
         {

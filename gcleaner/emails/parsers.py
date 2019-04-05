@@ -1,3 +1,5 @@
+import datetime
+
 from django.conf import settings
 
 
@@ -45,6 +47,32 @@ class GMailEmailParser(object):
                 for header in value['headers']:
                     if header['name'] in settings.GOOGLE_AUTH_SETTINGS['METADATA_HEADERS']:
                         local_header_name = cls._google_to_local_metadata_props[header['name']]
-                        result[local_header_name] = header['value']
+                        value = header['value']
+
+                        if local_header_name == 'date':
+                            value = cls.date_from_string(value)
+
+                        result[local_header_name] = value
 
         return result
+
+    @classmethod
+    def date_from_string(self, date_string):
+        """
+        Convert a date string into a `datetime.datetime` object instance.
+
+        Email dates are inconsistent. Below are examples of date strings that can
+        be sent in by GMail API:
+
+            - Tue, 05 Feb 2019 12:37:09 -0800 (PST)
+            - Tue, 5 Feb 2019 12:37:09 -0800 (PST)
+            - Tue, 05 Feb 2019 12:37:09 -0800
+            - Tue, 5 Feb 2019 12:37:09 -0800
+
+        :param {str} date_string: Date string to convert.
+
+        :return: Datetime instance.
+        """
+        if date_string[-1] == ')':
+            date_string = date_string.rsplit(' ', 1)[0]
+        return datetime.datetime.strptime(date_string, '%a, %d %b %Y %H:%M:%S %z')

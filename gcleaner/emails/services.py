@@ -158,7 +158,7 @@ class EmailService(object):
 
         date = self.get_date_to_retrieve_new_emails()
 
-        nr_of_local_emails = self.user.emails.all().count()
+        nr_of_local_emails = self.user.emails.exclude(labels__google_id='TRASH').count()
         nr_of_gmail_emails = len(self.gmail_service.get_unread_emails_ids(date))
 
         response['gmail'] = nr_of_gmail_emails
@@ -190,7 +190,7 @@ class EmailService(object):
             else:
                 LatestEmail.objects.create(user=self.user, email=self.latest_email)
 
-        return self.user.emails.all()
+        return self.user.emails.exclude(labels__google_id='TRASH')
 
     def gmail_service_batch_callback(self, request_id, response, exception):
         """
@@ -251,3 +251,4 @@ class EmailService(object):
                 email.labels.remove(*remove_labels)
         else:
             return errs
+

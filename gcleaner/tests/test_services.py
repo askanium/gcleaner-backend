@@ -165,7 +165,7 @@ def test_email_service_get_date_to_retrieve_emails_returns_date_of_latest_email(
 
 def test_email_service_retrieve_number_of_emails_a_user_has(mocker, google_credentials, gmail_api_list_response):
     user = mocker.Mock()
-    user.emails.all.return_value.count.return_value = 0
+    user.emails.exclude.return_value.count.return_value = 0
     service = EmailService(credentials=google_credentials, user=user)
     service.gmail_service = mocker.Mock()
     service.gmail_service.get_unread_emails_ids.return_value = gmail_api_list_response
@@ -180,7 +180,8 @@ def test_email_service_retrieve_number_of_emails_a_user_has(mocker, google_crede
     assert response['local'] == 0
     service.get_date_to_retrieve_new_emails.assert_called_once_with()
     service.gmail_service.get_unread_emails_ids.assert_called_once_with(None)
-    user.emails.all.return_value.count.assert_called_once_with()
+    user.emails.exclude.assert_called_once_with(labels__google_id='TRASH')
+    user.emails.exclude.return_value.count.assert_called_once_with()
 
 
 def test_email_service_retrieve_number_of_emails_a_user_has_when_there_are_existing_db_emails(mocker, latest_email, google_credentials, gmail_api_list_response):
@@ -199,7 +200,7 @@ def test_email_service_retrieve_number_of_emails_a_user_has_when_there_are_exist
 
 def test_email_service_retrieve_user_emails_for_the_first_time(user, all_labels, google_credentials, gmail_api_list_response, gmail_batch_response):
     # pre call assertions
-    assert user.emails.all().count() == 0
+    assert user.emails.exclude(labels__google_id='TRASH').count() == 0
     assert hasattr(user, 'latest_email') is False
 
     # test setup and mocking
@@ -215,14 +216,14 @@ def test_email_service_retrieve_user_emails_for_the_first_time(user, all_labels,
     emails = service.retrieve_unread_emails()
 
     # post call assertions
-    assert user.emails.all().count() == 3
+    assert user.emails.exclude(labels__google_id='TRASH').count() == 3
     assert user.latest_email.email == user.emails.order_by('-date').first()
-    assert list(emails) == list(user.emails.all())
+    assert list(emails) == list(user.emails.exclude(labels__google_id='TRASH'))
 
 
 def test_email_service_retrieve_subsequent_user_emails(user, all_labels, latest_email, google_credentials, gmail_api_list_response, gmail_batch_small_response):
     # pre call assertions
-    assert user.emails.all().count() == 1
+    assert user.emails.exclude(labels__google_id='TRASH').count() == 1
     assert user.latest_email == latest_email
 
     # test setup and mocking
@@ -239,10 +240,10 @@ def test_email_service_retrieve_subsequent_user_emails(user, all_labels, latest_
     emails = service.retrieve_unread_emails()
 
     # post call assertions
-    assert user.emails.all().count() == 3
+    assert user.emails.exclude(labels__google_id='TRASH').count() == 3
     assert user.latest_email.email == user.emails.order_by('-date').first()
     assert user.latest_email.email_id != latest_email_email_pk
-    assert list(emails) == list(user.emails.all())
+    assert list(emails) == list(user.emails.exclude(labels__google_id='TRASH'))
 
 
 def test_email_service_does_not_duplicate_emails(user, all_labels, google_credentials, gmail_api_get_3_response, gmail_api_list_response, gmail_batch_response):
@@ -250,7 +251,7 @@ def test_email_service_does_not_duplicate_emails(user, all_labels, google_creden
     service.gmail_service_batch_callback(1, gmail_api_get_3_response, None)
 
     # pre call assertions
-    assert user.emails.all().count() == 1
+    assert user.emails.exclude(labels__google_id='TRASH').count() == 1
 
     # test setup and mocking
     http = HttpMockSequence([
@@ -264,8 +265,8 @@ def test_email_service_does_not_duplicate_emails(user, all_labels, google_creden
     emails = service.retrieve_unread_emails()
 
     # post call assertions
-    assert user.emails.all().count() == 3
-    assert list(emails) == list(user.emails.all())
+    assert user.emails.exclude(labels__google_id='TRASH').count() == 3
+    assert list(emails) == list(user.emails.exclude(labels__google_id='TRASH'))
 
 
 def test_email_service_modify_emails(mocker, user, all_labels, google_credentials, gmail_api_email_1, gmail_api_email_2, gmail_api_email_3):
@@ -288,5 +289,5 @@ def test_email_service_modify_emails(mocker, user, all_labels, google_credential
     # assertions
     assert user.emails.all().count() == 3
     service.gmail_service.batch_modify_emails.assert_called_once_with(payload)
-    assert user.emails.filter(labels__google_id='INBOX').count() == 1
+    assert user.emails.exclude(labels__google_id='TRASH').count() == 1
     assert user.emails.filter(labels__google_id='TRASH').count() == 2

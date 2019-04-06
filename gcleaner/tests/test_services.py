@@ -129,9 +129,11 @@ def test_google_resource_create_and_run_a_batch_api_call(mocker, google_credenti
 
 
 def test_google_api_service_batch_modify_request(mocker, google_credentials, user):
+    response = mocker.Mock()
+    response.status = 204
     google_api_service = GoogleAPIService(credentials=google_credentials)
     google_api_service.service = mocker.Mock()
-    google_api_service.service.users.return_value.messages.return_value.batchModify.return_value.execute.return_value = {}
+    google_api_service.service.users.return_value.messages.return_value.batchModify.return_value.execute.return_value = response
     payload = {
         'ids': ['1', '2', '3'],
         'addLabelIds': ['TRASH'],

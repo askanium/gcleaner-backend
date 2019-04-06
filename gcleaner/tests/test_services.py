@@ -128,6 +128,23 @@ def test_google_resource_create_and_run_a_batch_api_call(mocker, google_credenti
     batch.execute.assert_called_once()
 
 
+def test_google_api_service_batch_modify_request(mocker, google_credentials, user):
+    google_api_service = GoogleAPIService(credentials=google_credentials)
+    google_api_service.service = mocker.Mock()
+    google_api_service.service.users.return_value.messages.return_value.batchModify.return_value.execute.return_value = {}
+    payload = {
+        'ids': ['1', '2', '3'],
+        'addLabelIds': ['TRASH'],
+        'removeLabelIds': ['INBOX']
+    }
+
+    # method call
+    google_api_service.batch_modify_emails(payload)
+
+    # assertions
+    google_api_service.service.users.return_value.messages.return_value.batchModify.assert_called_once_with(userId='me', body=payload)
+
+
 def test_email_service_get_date_to_retrieve_emails_returns_none_if_no_latest_email(user, google_credentials):
     service = EmailService(credentials=google_credentials, user=user)
 
@@ -247,3 +264,27 @@ def test_email_service_does_not_duplicate_emails(user, all_labels, google_creden
     # post call assertions
     assert user.emails.all().count() == 3
     assert list(emails) == list(user.emails.all())
+
+
+def test_email_service_modify_emails(mocker, user, all_labels, google_credentials, gmail_api_email_1, gmail_api_email_2, gmail_api_email_3):
+    # pre call assertions
+    assert user.emails.filter(labels__google_id='TRASH').count() == 0
+
+    # test setup and mocking
+    service = EmailService(credentials=google_credentials, user=user)
+    service.gmail_service = mocker.Mock()
+    service.gmail_service.batch_modify_emails.return_value = None
+    payload = {
+        'ids': [gmail_api_email_1.google_id, gmail_api_email_2.google_id],
+        'addLabelIds': ['TRASH'],
+        'removeLabelIds': ['INBOX']
+    }
+
+    # method call
+    service.modify_emails(payload)
+
+    # assertions
+    assert user.emails.all().count() == 3
+    service.gmail_service.batch_modify_emails.assert_called_once_with(payload)
+    assert user.emails.filter(labels__google_id='INBOX').count() == 1
+    assert user.emails.filter(labels__google_id='TRASH').count() == 2

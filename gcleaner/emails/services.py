@@ -3,7 +3,7 @@ from django.conf import settings
 from googleapiclient import errors
 from googleapiclient.discovery import build
 
-from gcleaner.emails.models import LatestEmail, Email
+from gcleaner.emails.models import LatestEmail, Email, Label
 from gcleaner.emails.parsers import GMailEmailParser
 
 
@@ -100,6 +100,22 @@ class GoogleAPIService(object):
 
         batch.execute()
 
+    def batch_modify_emails(self, payload):
+        """
+        Create and execute a batch request to modify labels on GMail servers.
+
+        :param payload: A dict that has the "ids", "addLabelIds" and
+                        "removeLabelIds" props, all lists with data to
+                        be modified on GMail servers.
+        :return: Errors if any or None
+        """
+        response = self.service.users().messages().batchModify(userId='me', body=payload).execute()
+
+        if response.status == 204:
+            return None
+        else:
+            return response['error']
+
 
 class EmailService(object):
     """
@@ -187,6 +203,8 @@ class EmailService(object):
                            generated automatically.
         :param {dict} response: A deserialized email object from the API response.
         :param exception: A `googleapiclient.errors.HttpError` instance or None
+
+        :return: The created email instance or None
         """
         if exception:
             # TODO handle exception
@@ -203,6 +221,8 @@ class EmailService(object):
             if not self.latest_email or self.latest_email.date < email.date:
                 self.latest_email = email
 
+            return email
+
     @staticmethod
     def create_email_from_dict(email_dict):
         """
@@ -211,3 +231,23 @@ class EmailService(object):
         :return: Newly reated Email instance.
         """
         return Email.from_dict(email_dict)
+
+    def modify_emails(self, payload):
+        """
+        Initiate a call to GMail API to change labels for the given emails.
+
+        :param payload: A dict that has the "ids", "addLabelIds" and
+                        "removeLabelIds" props, all lists with data to
+                        be modified on GMail servers.
+        """
+        errs = self.gmail_service.batch_modify_emails(payload)
+
+        if not errs:
+            emails = self.user.emails.filter(google_id__in=payload['ids'])
+            add_labels = Label.objects.filter(user=self.user, google_id__in=payload['addLabelIds'])
+            remove_labels = Label.objects.filter(user=self.user, google_id__in=payload['removeLabelIds'])
+            for email in emails:
+                email.labels.add(*add_labels)
+                email.labels.remove(*remove_labels)
+        else:
+            return errs

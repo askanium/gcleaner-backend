@@ -3,6 +3,7 @@ import pytest
 from google.oauth2.credentials import Credentials
 
 from gcleaner.emails.models import Label, Email, LatestEmail
+from gcleaner.emails.services import EmailService
 from gcleaner.users.models import User
 
 
@@ -37,12 +38,19 @@ def label_custom_category(user, db):
 
 
 @pytest.fixture
-def all_labels(label_inbox, label_unread, label_category_personal, label_custom_category):
+def label_trash(user, db):
+    label = Label.objects.create(user=user, google_id='TRASH', name='TRASH')
+    return label
+
+
+@pytest.fixture
+def all_labels(label_inbox, label_unread, label_category_personal, label_custom_category, label_trash):
     return [
         label_inbox,
         label_unread,
         label_category_personal,
-        label_custom_category
+        label_custom_category,
+        label_trash
     ]
 
 
@@ -197,6 +205,27 @@ def gmail_api_get_3_response():
                 ]
             }
         }
+
+
+@pytest.fixture
+def gmail_api_email_1(user, google_credentials, gmail_api_get_1_response):
+    service = EmailService(credentials=google_credentials, user=user)
+    email = service.gmail_service_batch_callback(1, gmail_api_get_1_response, None)
+    return email
+
+
+@pytest.fixture
+def gmail_api_email_2(user, google_credentials, gmail_api_get_2_response):
+    service = EmailService(credentials=google_credentials, user=user)
+    email = service.gmail_service_batch_callback(2, gmail_api_get_2_response, None)
+    return email
+
+
+@pytest.fixture
+def gmail_api_email_3(user, google_credentials, gmail_api_get_3_response):
+    service = EmailService(credentials=google_credentials, user=user)
+    email = service.gmail_service_batch_callback(3, gmail_api_get_3_response, None)
+    return email
 
 
 @pytest.fixture

@@ -15,31 +15,31 @@ def user(db):
 
 @pytest.fixture
 def label_unread(user, db):
-    label = Label.objects.create(user=user, google_id='UNREAD', name='UNREAD')
+    label = Label.objects.create(user=user, google_id='UNREAD', name='UNREAD', type='system')
     return label
 
 
 @pytest.fixture
 def label_inbox(user, db):
-    label = Label.objects.create(user=user, google_id='INBOX', name='INBOX')
+    label = Label.objects.create(user=user, google_id='INBOX', name='INBOX', type='system')
     return label
 
 
 @pytest.fixture
 def label_category_personal(user, db):
-    label = Label.objects.create(user=user, google_id='CATEGORY_PERSONAL', name='CATEGORY_PERSONAL')
+    label = Label.objects.create(user=user, google_id='CATEGORY_PERSONAL', name='CATEGORY_PERSONAL', type='system')
     return label
 
 
 @pytest.fixture
 def label_custom_category(user, db):
-    label = Label.objects.create(user=user, google_id='Label_35', name='Custom Label')
+    label = Label.objects.create(user=user, google_id='Label_35', name='Custom Label', type='user')
     return label
 
 
 @pytest.fixture
 def label_trash(user, db):
-    label = Label.objects.create(user=user, google_id='TRASH', name='TRASH')
+    label = Label.objects.create(user=user, google_id='TRASH', name='TRASH', type='system')
     return label
 
 

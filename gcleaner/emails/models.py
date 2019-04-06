@@ -15,6 +15,9 @@ class Label(models.Model):
 
     # Attributes
     name = models.CharField(max_length=255)
+    type = models.CharField(max_length=6, choices=[('system', 'System'), ('user', 'User')], default='system')
+    text_color = models.CharField(max_length=10, blank=True)
+    background_color = models.CharField(max_length=10, blank=True)
 
     def __repr__(self):
         return "<Label %s>" % self.name

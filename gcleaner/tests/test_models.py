@@ -1,6 +1,6 @@
 import datetime
 
-from gcleaner.emails.models import Email
+from gcleaner.emails.models import Email, Label
 from gcleaner.users.models import User
 
 
@@ -91,3 +91,21 @@ def test_email_model_from_dict_with_missing_boolean_props(user, label_inbox, lab
             'user': user.pk
         }
     ]
+
+
+def test_label_creation_of_system_type(user):
+    label = Label.objects.create(user=user,
+                                 google_id='INBOX',
+                                 type='system',
+                                 name='INBOX')
+    assert label.pk is not None
+
+
+def test_label_creation_of_user_type(user):
+    label = Label.objects.create(user=user,
+                                 google_id='Label_10',
+                                 type='user',
+                                 name='INBOX',
+                                 text_color='#cccccc',
+                                 background_color='#f3f3f3')
+    assert label.pk is not None

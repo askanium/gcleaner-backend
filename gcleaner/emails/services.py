@@ -164,7 +164,8 @@ class EmailService(object):
         In order for a better UX, this method computes the amount of emails that
         are already retrieved from GMail API and stored in the DB *and* the new
         emails that are on GMail servers but not locally.
-        :return:
+
+        :return: A dict with number of emails stored locally and new emails on GMail.
         """
         response = {}
 

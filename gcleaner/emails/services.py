@@ -228,12 +228,51 @@ class EmailService(object):
             email_dict = GMailEmailParser.parse(response)
             email_dict['user'] = self.user.pk
 
-            email = self.create_email_from_dict(email_dict)
+            try:
+                email = self.create_email_from_dict(email_dict)
+            except Label.DoesNotExist:
+                self.update_labels()
+                email = self.assign_labels_to_email(email_dict)
 
             if not self.latest_email or self.latest_email.date < email.date:
                 self.latest_email = email
 
             return email
+
+    def assign_labels_to_email(self, email_dict):
+        """
+        Clear any labels for the email defined by the email dict and re-assign
+        all labels.
+
+        This method is called after calling `update_labels()` that populates the
+        database with any new label from the GMail API.
+
+        :param email_dict: The dict that contains all the info about the email.
+
+        :return: The updated email instance.
+        """
+        email = Email.objects.get(user=self.user, google_id=email_dict['google_id'])
+        email.labels.clear()
+
+        for label_id in email_dict['labels']:
+            label = Label.objects.get(user=self.user, google_id=label_id)
+            email.labels.add(label)
+
+        return email
+
+    def update_labels(self):
+        """
+        Retrieve a list of User's labels.
+        """
+        labels = self.gmail_service.list_user_labels()
+
+        for label in labels:
+            Label.objects.get_or_create(user=self.user,
+                                        google_id=label['id'],
+                                        name=label['name'],
+                                        type=label['type'],
+                                        text_color=label.get('color', {}).get('textColor', ''),
+                                        background_color=label.get('color', {}).get('backgroundColor', ''))
 
     @staticmethod
     def create_email_from_dict(email_dict):

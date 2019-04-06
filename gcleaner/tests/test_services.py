@@ -10,6 +10,7 @@ from googleapiclient.errors import HttpError
 from googleapiclient.http import HttpMockSequence, HttpMock, RequestMockBuilder
 from mock import call
 
+from gcleaner.emails.models import Label
 from gcleaner.emails.services import GoogleAPIService, EmailService
 
 
@@ -292,6 +293,78 @@ def test_email_service_does_not_duplicate_emails(user, all_labels, google_creden
     # post call assertions
     assert user.emails.exclude(labels__google_id='TRASH').count() == 3
     assert list(emails) == list(user.emails.exclude(labels__google_id='TRASH'))
+
+
+def test_email_service_automatically_updates_labels_from_api(user, all_labels, google_credentials, gmail_api_get_3_response, gmail_api_list_response, gmail_batch_response):
+    Label.objects.get(google_id='Label_35').delete()
+
+    service = EmailService(credentials=google_credentials, user=user)
+
+    # pre call assertions
+    assert user.labels.filter(google_id='Label_35').count() == 0
+
+    # test setup and mocking
+    labels = [
+        {'id': 'INBOX', 'name': 'INBOX', 'type': 'system'},
+        {'id': 'UNREAD', 'name': 'UNREAD', 'type': 'system'},
+        {'id': 'TRASH', 'name': 'TRASH', 'type': 'system'},
+        {'id': 'Label_35', 'name': 'Custom Label', 'type': 'user', 'color': {'textColor': '#cccccc', 'backgroundColor': '#ffffff'}}
+    ]
+    http = HttpMockSequence([
+        ({'status': 200}, open(os.path.join(DATA_DIR, 'gmail.json'), 'rb').read()),
+        ({'status': 200}, json.dumps({'messages': gmail_api_list_response})),
+        ({'status': 200, 'content-type': 'multipart/mixed; boundary=batch_ygSpAcfQXdA_AAfKEo9rkX4'}, gmail_batch_response),
+        ({'status': 200}, json.dumps({'labels': labels}))
+    ])
+    service.gmail_service.service = build('gmail', 'v1', http=http)
+
+    # method call
+    service.retrieve_unread_emails()
+
+    # post call assertions
+    assert user.labels.filter(google_id='Label_35').count() == 1
+    assert user.labels.filter(google_id='INBOX').count() == 1
+
+
+def test_email_service_create_update_labels_from_api_response(mocker, user, google_credentials, label_inbox):
+    service = EmailService(credentials=google_credentials, user=user)
+
+    # pre call assertions
+    assert user.labels.all().count() == 1
+
+    # test setup and mocking
+    labels = [
+        {'id': 'INBOX', 'name': 'INBOX', 'type': 'system'},
+        {'id': 'UNREAD', 'name': 'UNREAD', 'type': 'system'},
+        {'id': 'TRASH', 'name': 'TRASH', 'type': 'system'},
+        {'id': 'Label_35', 'name': 'Custom Label', 'type': 'user', 'color': {'textColor': '#cccccc', 'backgroundColor': '#ffffff'}}
+    ]
+    service.gmail_service = mocker.Mock()
+    service.gmail_service.list_user_labels.return_value = labels
+
+    # method call
+    service.update_labels()
+
+    # post call assertions
+    assert user.labels.all().count() == 4
+
+
+def test_email_service_assign_labels_to_email(email, user, all_labels, google_credentials):
+    service = EmailService(credentials=google_credentials, user=user)
+
+    # test setup and mocking
+    labels = [all_labels[-2].google_id, all_labels[-1].google_id]
+    email_dict = {
+        'google_id': email.google_id,
+        'labels': labels
+    }
+    assert list(email.labels.all().values_list('google_id', flat=True)) == ['UNREAD', 'INBOX']
+
+    # method call
+    service.assign_labels_to_email(email_dict)
+
+    # assertions
+    assert list(email.labels.all().values_list('google_id', flat=True)) == labels
 
 
 def test_email_service_modify_emails(mocker, user, all_labels, google_credentials, gmail_api_email_1, gmail_api_email_2, gmail_api_email_3):

@@ -208,7 +208,7 @@ class EmailService(object):
         """
         if exception:
             # TODO handle exception
-            print(exception)
+            print('batch callback exc', exception)
             pass
 
         # do not create email in case it already exists in the database

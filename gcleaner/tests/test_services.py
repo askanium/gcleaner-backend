@@ -10,6 +10,7 @@ from googleapiclient.errors import HttpError
 from googleapiclient.http import HttpMockSequence
 from mock import call
 
+from gcleaner.emails.models import LatestEmail
 from gcleaner.emails.services import GoogleAPIService, EmailService
 
 
@@ -223,4 +224,27 @@ def test_email_service_retrieve_subsequent_user_emails(user, all_labels, latest_
     assert user.emails.all().count() == 3
     assert user.latest_email.email == user.emails.order_by('-date').first()
     assert user.latest_email.email_id != latest_email_email_pk
+    assert list(emails) == list(user.emails.all())
+
+
+def test_email_service_does_not_duplicate_emails(user, all_labels, google_credentials, gmail_api_get_3_response, gmail_api_list_response, gmail_batch_response):
+    service = EmailService(credentials=google_credentials, user=user)
+    service.gmail_service_batch_callback(1, gmail_api_get_3_response, None)
+
+    # pre call assertions
+    assert user.emails.all().count() == 1
+
+    # test setup and mocking
+    http = HttpMockSequence([
+        ({'status': 200}, open(os.path.join(DATA_DIR, 'gmail.json'), 'rb').read()),
+        ({'status': 200}, json.dumps({'messages': gmail_api_list_response})),
+        ({'status': 200, 'content-type': 'multipart/mixed; boundary=batch_ygSpAcfQXdA_AAfKEo9rkX4'}, gmail_batch_response),
+    ])
+    service.gmail_service.service = build('gmail', 'v1', http=http)
+
+    # method call
+    emails = service.retrieve_unread_emails()
+
+    # post call assertions
+    assert user.emails.all().count() == 3
     assert list(emails) == list(user.emails.all())

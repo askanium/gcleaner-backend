@@ -192,11 +192,22 @@ class EmailService(object):
             # TODO handle exception
             print(exception)
             pass
-        else:
+
+        # do not create email in case it already exists in the database
+        elif not self.user.emails.filter(google_id=response['id']).exists():
             email_dict = GMailEmailParser.parse(response)
             email_dict['user'] = self.user.pk
 
-            email = Email.from_dict(email_dict)
+            email = self.create_email_from_dict(email_dict)
 
             if not self.latest_email or self.latest_email.date < email.date:
                 self.latest_email = email
+
+    @staticmethod
+    def create_email_from_dict(email_dict):
+        """
+        Create an Email instance from a dict with all necessary data.
+        :param email_dict: A dictionary with email details.
+        :return: Newly reated Email instance.
+        """
+        return Email.from_dict(email_dict)

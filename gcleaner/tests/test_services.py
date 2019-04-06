@@ -7,7 +7,7 @@ from django.conf import settings
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import Resource, build
 from googleapiclient.errors import HttpError
-from googleapiclient.http import HttpMockSequence
+from googleapiclient.http import HttpMockSequence, HttpMock, RequestMockBuilder
 from mock import call
 
 from gcleaner.emails.services import GoogleAPIService, EmailService
@@ -145,6 +145,31 @@ def test_google_api_service_batch_modify_request(mocker, google_credentials, use
 
     # assertions
     google_api_service.service.users.return_value.messages.return_value.batchModify.assert_called_once_with(userId='me', body=payload)
+
+
+def test_google_api_service_retrieve_user_labels(mocker, google_credentials):
+    google_api_service = GoogleAPIService(credentials=google_credentials)
+    google_api_service.service = mocker.Mock()
+
+    http = HttpMock(os.path.join(DATA_DIR, 'gmail.json'), {'status': 200})
+    labels = [
+        {'id': 'INBOX', 'name': 'INBOX', 'type': 'system'},
+        {'id': 'UNREAD', 'name': 'UNREAD', 'type': 'system'},
+        {'id': 'TRASH', 'name': 'TRASH', 'type': 'system'},
+        {'id': 'Label_10', 'name': 'Custom Label', 'type': 'user', 'text_color': '#cccccc', 'background_color': '#ffffff'}
+    ]
+
+    request_builder = RequestMockBuilder({
+        'gmail.users.labels.list': (None, json.dumps({'labels': labels}))
+    })
+
+    google_api_service.service = build('gmail', 'v1', http=http, requestBuilder=request_builder)
+
+    # method call
+    response = google_api_service.list_user_labels()
+
+    # assertions
+    assert response == labels
 
 
 def test_email_service_get_date_to_retrieve_emails_returns_none_if_no_latest_email(user, google_credentials):

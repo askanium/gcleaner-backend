@@ -116,6 +116,18 @@ class GoogleAPIService(object):
         else:
             return response['error']
 
+    def list_user_labels(self):
+        """
+        Retrieve user labels from GMail API.
+
+        :return: The list of labels.
+        """
+        response = self.service.users().labels().list(userId='me').execute()
+
+        labels = response.get('labels', [])
+
+        return labels
+
 
 class EmailService(object):
     """

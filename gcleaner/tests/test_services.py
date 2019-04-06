@@ -1,13 +1,19 @@
 import datetime
+import json
+import os
 
 from django.conf import settings
 
 from google.oauth2.credentials import Credentials
-from googleapiclient.discovery import Resource
+from googleapiclient.discovery import Resource, build
 from googleapiclient.errors import HttpError
+from googleapiclient.http import HttpMockSequence
 from mock import call
 
 from gcleaner.emails.services import GoogleAPIService, EmailService
+
+
+DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 
 
 def test_google_resource_service_initialization(google_credentials):
@@ -170,3 +176,51 @@ def test_email_service_retrieve_number_of_emails_a_user_has_when_there_are_exist
     assert response['gmail'] == 3
     assert response['local'] == 1
     service.gmail_service.get_unread_emails_ids.assert_called_once_with('2019-03-19')
+
+
+def test_email_service_retrieve_user_emails_for_the_first_time(user, all_labels, google_credentials, gmail_api_list_response, gmail_batch_response):
+    # pre call assertions
+    assert user.emails.all().count() == 0
+    assert hasattr(user, 'latest_email') is False
+
+    # test setup and mocking
+    service = EmailService(credentials=google_credentials, user=user)
+    http = HttpMockSequence([
+        ({'status': 200}, open(os.path.join(DATA_DIR, 'gmail.json'), 'rb').read()),
+        ({'status': 200}, json.dumps({'messages': gmail_api_list_response})),
+        ({'status': 200, 'content-type': 'multipart/mixed; boundary=batch_ygSpAcfQXdA_AAfKEo9rkX4'}, gmail_batch_response),
+    ])
+    service.gmail_service.service = build('gmail', 'v1', http=http)
+
+    # method call
+    emails = service.retrieve_unread_emails()
+
+    # post call assertions
+    assert user.emails.all().count() == 3
+    assert user.latest_email.email == user.emails.order_by('-date').first()
+    assert list(emails) == list(user.emails.all())
+
+
+def test_email_service_retrieve_subsequent_user_emails(user, all_labels, latest_email, google_credentials, gmail_api_list_response, gmail_batch_small_response):
+    # pre call assertions
+    assert user.emails.all().count() == 1
+    assert user.latest_email == latest_email
+
+    # test setup and mocking
+    latest_email_email_pk = latest_email.email_id
+    service = EmailService(credentials=google_credentials, user=user)
+    http = HttpMockSequence([
+        ({'status': 200}, open(os.path.join(DATA_DIR, 'gmail.json'), 'rb').read()),
+        ({'status': 200}, json.dumps({'messages': gmail_api_list_response[:2]})),
+        ({'status': 200, 'content-type': 'multipart/mixed; boundary=batch_ygSpAcfQXdA_AAfKEo9rkX4'}, gmail_batch_small_response),
+    ])
+    service.gmail_service.service = build('gmail', 'v1', http=http)
+
+    # method call
+    emails = service.retrieve_unread_emails()
+
+    # post call assertions
+    assert user.emails.all().count() == 3
+    assert user.latest_email.email == user.emails.order_by('-date').first()
+    assert user.latest_email.email_id != latest_email_email_pk
+    assert list(emails) == list(user.emails.all())

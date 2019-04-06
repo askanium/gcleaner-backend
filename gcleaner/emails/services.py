@@ -3,7 +3,8 @@ from django.conf import settings
 from googleapiclient import errors
 from googleapiclient.discovery import build
 
-from gcleaner.emails.models import LatestEmail
+from gcleaner.emails.models import LatestEmail, Email
+from gcleaner.emails.parsers import GMailEmailParser
 
 
 class GoogleAPIService(object):
@@ -102,11 +103,15 @@ class GoogleAPIService(object):
 
 class EmailService(object):
     """
+    Service class to handle Email retrieval for a user.
 
+    Does API calls to the GMail API and stores the results in the database
+    for faster retrieval.
     """
     def __init__(self, credentials, user):
         self.gmail_service = GoogleAPIService(credentials)
         self.user = user
+        self.latest_email = None
 
     def get_date_to_retrieve_new_emails(self):
         """
@@ -144,3 +149,54 @@ class EmailService(object):
         response['local'] = nr_of_local_emails
 
         return response
+
+    def retrieve_unread_emails(self):
+        """
+        Retrieve a list of User's unread emails to be sent as a response.
+
+        This method consists of several steps:
+            1. Check for the latest email that exists in the DB for the given user.
+            2. Make an API call to GMail to get any emails *after* the latest email.
+            3. Save new emails in the DB.
+            4. Retrieve and return all unread emails.
+        :return: A list of `gcleaner.emails.models.Email` object instances.
+        """
+        date = self.get_date_to_retrieve_new_emails()
+
+        new_emails = self.gmail_service.get_unread_emails_ids(date)
+
+        self.gmail_service.get_emails_details(new_emails, self.gmail_service_batch_callback)
+
+        if self.latest_email:
+            if hasattr(self.user, 'latest_email'):
+                self.user.latest_email.email = self.latest_email
+                self.user.latest_email.save()
+            else:
+                LatestEmail.objects.create(user=self.user, email=self.latest_email)
+
+        return self.user.emails.all()
+
+    def gmail_service_batch_callback(self, request_id, response, exception):
+        """
+        The callback to be called for each batch request.
+
+        In case no exception have occurred, save the email in the database,
+        otherwise handle the exception.
+
+        :param request_id: A unique identifier for the request in the batch,
+                           generated automatically.
+        :param {dict} response: A deserialized email object from the API response.
+        :param exception: A `googleapiclient.errors.HttpError` instance or None
+        """
+        if exception:
+            # TODO handle exception
+            print(exception)
+            pass
+        else:
+            email_dict = GMailEmailParser.parse(response)
+            email_dict['user'] = self.user.pk
+
+            email = Email.from_dict(email_dict)
+
+            if not self.latest_email or self.latest_email.date < email.date:
+                self.latest_email = email

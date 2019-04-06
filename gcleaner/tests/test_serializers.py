@@ -22,7 +22,7 @@ def test_email_serializer(email, label_unread, label_inbox):
         'delivered_to': 'Delivered To',
         'starred': False,
         'important': False,
-        'date': '2019-03-19 10:31:21+00:00'
+        'date': '2019-03-19 08:11:21+00:00'
     }
     serializer = EmailSerializer(email)
     # serializer.is_valid()

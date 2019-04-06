@@ -31,6 +31,22 @@ def label_category_personal(user, db):
 
 
 @pytest.fixture
+def label_custom_category(user, db):
+    label = Label.objects.create(user=user, google_id='Label_35', name='Custom Label')
+    return label
+
+
+@pytest.fixture
+def all_labels(label_inbox, label_unread, label_category_personal, label_custom_category):
+    return [
+        label_inbox,
+        label_unread,
+        label_category_personal,
+        label_custom_category
+    ]
+
+
+@pytest.fixture
 def email(user, label_unread, label_inbox, db):
     email = Email.objects.create(user=user,
                                  google_id='a123',
@@ -42,7 +58,7 @@ def email(user, label_unread, label_inbox, db):
                                  delivered_to='Delivered To',
                                  starred=False,
                                  important=False,
-                                 date='2019-03-19 10:31:21+00:00')
+                                 date='2019-03-19 08:11:21+00:00')
     email.labels.add(label_unread)
     email.labels.add(label_inbox)
     return email
@@ -105,7 +121,7 @@ def gmail_api_get_2_response():
             "id": "159951b16a5c5591",
             "threadId": "159951b16a5c5591",
             "labelIds": [
-                "CATEGORY_PROMOTIONS",
+                "CATEGORY_PERSONAL",
                 "UNREAD",
                 "INBOX",
                 "Label_35"
@@ -201,3 +217,24 @@ def gmail_api_list_response():
     ]
 
     return emails
+
+
+@pytest.fixture
+def gmail_batch_response(gmail_api_get_1_response, gmail_api_get_2_response, gmail_api_get_3_response):
+    response = """
+--batch_ygSpAcfQXdA_AAfKEo9rkX4\r\nContent-Type: application/http\r\nContent-ID: <response-eb0275a7-6c83-4b6c-9b9e-10c525f64f19 + 1>\r\n\r\nHTTP/1.1 200 OK\r\nETag: "LZWdHVzsAG0UZhwmZBdpM9j7eJQ/_VWh__H0wb3woEXGUB0Gw6gbJEM"\r\nContent-Type: application/json; charset=UTF-8\r\nDate: Fri, 05 Apr 2019 13:27:19 GMT\r\nExpires: Fri, 05 Apr 2019 13:27:19 GMT\r\nCache-Control: private, max-age=0\r\nContent-Length: 1000\r\n\r\n{email1}\r\n\r\n--batch_ygSpAcfQXdA_AAfKEo9rkX4\r\nContent-Type: application/http\r\nContent-ID: <response-eb0275a7-6c83-4b6c-9b9e-10c525f64f19 + 2>\r\n\r\nHTTP/1.1 200 OK\r\nETag: "LZWdHVzsAG0UZhwmZBdpM9j7eJQ/RmebJ7MNtiqLslsyXDqenB6Jbqo"\r\nContent-Type: application/json; charset=UTF-8\r\nDate: Fri, 05 Apr 2019 13:27:19 GMT\r\nExpires: Fri, 05 Apr 2019 13:27:19 GMT\r\nCache-Control: private, max-age=0\r\nContent-Length: 1000\r\n\r\n{email2}\r\n\r\n--batch_ygSpAcfQXdA_AAfKEo9rkX4\r\nContent-Type: application/http\r\nContent-ID: <response-eb0275a7-6c83-4b6c-9b9e-10c525f64f19 + 3>\r\n\r\nHTTP/1.1 200 OK\r\nETag: "LZWdHVzsAG0UZhwmZBdpM9j7eJQ/HF6WWUaqat1LByM3pYk8sNDqRh8"\r\nContent-Type: application/json; charset=UTF-8\r\nDate: Fri, 05 Apr 2019 13:27:19 GMT\r\nExpires: Fri, 05 Apr 2019 13:27:19 GMT\r\nCache-Control: private, max-age=0\r\nContent-Length: 1000\r\n\r\n{email3}
+""".format(email1=json.dumps(gmail_api_get_1_response),
+           email2=json.dumps(gmail_api_get_2_response),
+           email3=json.dumps(gmail_api_get_3_response))
+
+    return response
+
+
+@pytest.fixture
+def gmail_batch_small_response(gmail_api_get_1_response, gmail_api_get_2_response):
+    response = """
+--batch_ygSpAcfQXdA_AAfKEo9rkX4\r\nContent-Type: application/http\r\nContent-ID: <response-eb0275a7-6c83-4b6c-9b9e-10c525f64f19 + 1>\r\n\r\nHTTP/1.1 200 OK\r\nETag: "LZWdHVzsAG0UZhwmZBdpM9j7eJQ/_VWh__H0wb3woEXGUB0Gw6gbJEM"\r\nContent-Type: application/json; charset=UTF-8\r\nDate: Fri, 05 Apr 2019 13:27:19 GMT\r\nExpires: Fri, 05 Apr 2019 13:27:19 GMT\r\nCache-Control: private, max-age=0\r\nContent-Length: 1000\r\n\r\n{email1}\r\n\r\n--batch_ygSpAcfQXdA_AAfKEo9rkX4\r\nContent-Type: application/http\r\nContent-ID: <response-eb0275a7-6c83-4b6c-9b9e-10c525f64f19 + 2>\r\n\r\nHTTP/1.1 200 OK\r\nETag: "LZWdHVzsAG0UZhwmZBdpM9j7eJQ/RmebJ7MNtiqLslsyXDqenB6Jbqo"\r\nContent-Type: application/json; charset=UTF-8\r\nDate: Fri, 05 Apr 2019 13:27:19 GMT\r\nExpires: Fri, 05 Apr 2019 13:27:19 GMT\r\nCache-Control: private, max-age=0\r\nContent-Length: 1000\r\n\r\n{email2}
+""".format(email1=json.dumps(gmail_api_get_1_response),
+           email2=json.dumps(gmail_api_get_2_response))
+
+    return response

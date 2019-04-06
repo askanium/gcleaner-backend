@@ -10,7 +10,6 @@ from googleapiclient.errors import HttpError
 from googleapiclient.http import HttpMockSequence
 from mock import call
 
-from gcleaner.emails.models import LatestEmail
 from gcleaner.emails.services import GoogleAPIService, EmailService
 
 

@@ -173,6 +173,22 @@ def test_google_api_service_retrieve_user_labels(mocker, google_credentials):
     assert response == labels
 
 
+def test_email_service_initialization_when_no_latest_email_exists(user, google_credentials):
+    service = EmailService(credentials=google_credentials, user=user)
+
+    assert isinstance(service.gmail_service, GoogleAPIService)
+    assert service.user == user
+    assert service.last_saved_email is None
+
+
+def test_email_service_initialization_when_latest_email_exists(user, google_credentials, latest_email):
+    service = EmailService(credentials=google_credentials, user=user)
+
+    assert isinstance(service.gmail_service, GoogleAPIService)
+    assert service.user == user
+    assert service.last_saved_email == latest_email.email
+
+
 def test_email_service_get_date_to_retrieve_emails_returns_none_if_no_latest_email(user, google_credentials):
     service = EmailService(credentials=google_credentials, user=user)
 
@@ -192,6 +208,9 @@ def test_email_service_get_date_to_retrieve_emails_returns_date_of_latest_email(
 def test_email_service_retrieve_number_of_emails_a_user_has(mocker, google_credentials, gmail_api_list_response):
     user = mocker.Mock()
     user.emails.exclude.return_value.count.return_value = 0
+    EmailService.get_last_saved_email = mocker.Mock()
+    EmailService.get_last_saved_email.return_value = None
+
     service = EmailService(credentials=google_credentials, user=user)
     service.gmail_service = mocker.Mock()
     service.gmail_service.get_unread_emails_ids.return_value = gmail_api_list_response

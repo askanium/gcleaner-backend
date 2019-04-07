@@ -139,20 +139,31 @@ class EmailService(object):
     def __init__(self, credentials, user):
         self.gmail_service = GoogleAPIService(credentials)
         self.user = user
-        self.latest_email = None
+        self.last_saved_email = self.get_last_saved_email()
+
+    def get_last_saved_email(self):
+        """
+        Retrieves the last Email instance of the user in case there is one.
+
+        This method does not return a LatestEmail instance, as
+        :return: Email instance or None
+        """
+        try:
+            last_saved_email = LatestEmail.objects.get(user=self.user).email
+        except LatestEmail.DoesNotExist:
+            last_saved_email = None
+
+        return last_saved_email
 
     def get_date_to_retrieve_new_emails(self):
         """
         Compute the starting date since when GMail API should send unread emails
         :return: Date of the latest email in the database or None.
         """
-        try:
-            latest_email = LatestEmail.objects.get(user=self.user)
-            date = latest_email.email.date.strftime('%Y-%m-%d')
-        except LatestEmail.DoesNotExist:
-            date = None
+        if self.last_saved_email:
+            return self.last_saved_email.date.strftime('%Y-%m-%d')
 
-        return date
+        return None
 
     def retrieve_nr_of_unread_emails(self):
         """
@@ -196,12 +207,12 @@ class EmailService(object):
 
         self.gmail_service.get_emails_details(new_emails, self.gmail_service_batch_callback)
 
-        if self.latest_email:
+        if self.last_saved_email:
             if hasattr(self.user, 'latest_email'):
-                self.user.latest_email.email = self.latest_email
+                self.user.latest_email.email = self.last_saved_email
                 self.user.latest_email.save()
             else:
-                LatestEmail.objects.create(user=self.user, email=self.latest_email)
+                LatestEmail.objects.create(user=self.user, email=self.last_saved_email)
 
         return self.user.emails.exclude(labels__google_id='TRASH')
 
@@ -235,8 +246,8 @@ class EmailService(object):
                 self.update_labels()
                 email = self.assign_labels_to_email(email_dict)
 
-            if not self.latest_email or self.latest_email.date < email.date:
-                self.latest_email = email
+            if not self.last_saved_email or self.last_saved_email.date < email.date:
+                self.last_saved_email = email
 
             return email
 

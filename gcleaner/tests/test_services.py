@@ -12,7 +12,7 @@ from mock import call
 
 from gcleaner.emails.models import Label
 from gcleaner.emails.services import GoogleAPIService, EmailService
-
+from gcleaner.tests.factories import EmailFactory
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 
@@ -249,6 +249,7 @@ def test_email_service_retrieve_user_emails_for_the_first_time(user, all_labels,
     assert hasattr(user, 'latest_email') is False
 
     # test setup and mocking
+    EmailFactory.create_batch(20)
     service = EmailService(credentials=google_credentials, user=user)
     http = HttpMockSequence([
         ({'status': 200}, open(os.path.join(DATA_DIR, 'gmail.json'), 'rb').read()),

@@ -19,7 +19,7 @@ from django.views.generic import RedirectView
 from rest_framework.routers import DefaultRouter
 
 from gcleaner.authentication.jwt import obtain_jwt_token
-from gcleaner.emails.views import EmailListView
+from gcleaner.emails.views import EmailListView, EmailModifyView
 
 router = DefaultRouter()
 
@@ -27,6 +27,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/v1/', include(router.urls)),
     path('api/v1/messages/', EmailListView.as_view()),
+    path('api/v1/messages/modify/', EmailModifyView.as_view()),
     path('api-token-auth/', obtain_jwt_token),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
 

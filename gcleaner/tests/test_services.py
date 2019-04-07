@@ -208,7 +208,7 @@ def test_email_service_get_date_to_retrieve_emails_returns_date_of_latest_email(
 def test_email_service_retrieve_number_of_emails_a_user_has(mocker, google_credentials, gmail_api_list_response):
     user = mocker.Mock()
     user.emails.exclude.return_value.count.return_value = 0
-    EmailService.get_last_saved_email = mocker.Mock()
+    mocker.patch.object(EmailService, 'get_last_saved_email')
     EmailService.get_last_saved_email.return_value = None
 
     service = EmailService(credentials=google_credentials, user=user)

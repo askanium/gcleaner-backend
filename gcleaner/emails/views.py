@@ -2,14 +2,25 @@ from rest_framework.generics import ListAPIView
 
 from gcleaner.emails.models import Email
 from gcleaner.emails.serializers import EmailSerializer
+from gcleaner.emails.services import EmailService
+from gcleaner.utils.mixins import APIJWTDecoderMixin
 
 
-class EmailListView(ListAPIView):
+class EmailListView(APIJWTDecoderMixin, ListAPIView):
     """
     API view to list user emails.
     """
     queryset = Email.objects.all()
     serializer_class = EmailSerializer
+    service_class = EmailService
+
+    def get_service(self):
+        """
+        Return the service instance that should be used to retrieve user emails.
+        """
+        service = self.service_class(self.get_google_credentials(self.request), self.request.user)
+
+        return service
 
     def get_queryset(self):
         """
@@ -18,6 +29,8 @@ class EmailListView(ListAPIView):
 
         :return: The filtered queryset.
         """
-        queryset = super().get_queryset()
-        queryset = queryset.filter(user=self.request.user)
+        service = self.get_service()
+
+        queryset = service.retrieve_unread_emails()
+
         return queryset

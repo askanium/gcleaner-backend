@@ -111,7 +111,9 @@ class GoogleAPIService(object):
         """
         response = self.service.users().messages().batchModify(userId='me', body=payload).execute()
 
-        if response.status == 204:
+        # In case batchModify request was successful, it returns an empty string,
+        # otherwise it returns a dict with an 'error' key with error details.
+        if not response:
             return None
         else:
             return response['error']

@@ -88,123 +88,114 @@ def google_credentials():
 @pytest.fixture
 def gmail_api_get_1_response():
     return {
-            "id": "1599581458cf8986",
-            "threadId": "1599581458cf8986",
-            "labelIds": [
-                "UNREAD",
-                "CATEGORY_PERSONAL",
-                "INBOX"
-            ],
-            "snippet": "GmailCleaner connected to your Google Account",
-            "payload": {
-                "headers": [
-                    {
-                        "name": "Delivered-To",
-                        "value": "me@email.com"
-                    },
-                    {
-                        "name": "Date",
-                        "value": "Tue, 19 Mar 2019 10:31:21 +0000 (UTC)"
-                    },
-                    {
-                        "name": "Subject",
-                        "value": "GmailCleaner connected to your Google Account"
-                    },
-                    {
-                        "name": "From",
-                        "value": "Google <no-reply@accounts.google.com>"
-                    },
-                    {
-                        "name": "To",
-                        "value": "me@email.com"
-                    },
-                ]
-            }
+        "id": "1599581458cf8986",
+        "threadId": "1599581458cf8986",
+        "labelIds": [
+            "UNREAD",
+            "CATEGORY_PERSONAL",
+            "INBOX"
+        ],
+        "internalDate": "1552991481000",
+        "snippet": "GmailCleaner connected to your Google Account",
+        "payload": {
+            "headers": [
+                {
+                    "name": "Delivered-To",
+                    "value": "me@email.com"
+                },
+                {
+                    "name": "Subject",
+                    "value": "GmailCleaner connected to your Google Account"
+                },
+                {
+                    "name": "From",
+                    "value": "Google <no-reply@accounts.google.com>"
+                },
+                {
+                    "name": "To",
+                    "value": "me@email.com"
+                },
+            ]
         }
+    }
 
 
 @pytest.fixture
 def gmail_api_get_2_response():
     return {
-            "id": "159951b16a5c5591",
-            "threadId": "159951b16a5c5591",
-            "labelIds": [
-                "CATEGORY_PERSONAL",
-                "UNREAD",
-                "INBOX",
-                "Label_35"
-            ],
-            "snippet": "Promotion! Promotion! Promotion!",
-            "payload": {
-                "headers": [
-                    {
-                        "name": "Delivered-To",
-                        "value": "me@email.com"
-                    },
-                    {
-                        "name": "From",
-                        "value": "Aa from baa.co <aa@baa.co>"
-                    },
-                    {
-                        "name": "Subject",
-                        "value": "Nice subject line"
-                    },
-                    {
-                        "name": "To",
-                        "value": "Name Surname <me@email.com>"
-                    },
-                    {
-                        "name": "Date",
-                        "value": "Tue, 19 Mar 2019 08:39:19 +0000"
-                    },
-                ]
-            }
+        "id": "159951b16a5c5591",
+        "threadId": "159951b16a5c5591",
+        "labelIds": [
+            "CATEGORY_PERSONAL",
+            "UNREAD",
+            "INBOX",
+            "Label_35"
+        ],
+        "internalDate": "1552984759000",
+        "snippet": "Promotion! Promotion! Promotion!",
+        "payload": {
+            "headers": [
+                {
+                    "name": "Delivered-To",
+                    "value": "me@email.com"
+                },
+                {
+                    "name": "From",
+                    "value": "Aa from baa.co <aa@baa.co>"
+                },
+                {
+                    "name": "Subject",
+                    "value": "Nice subject line"
+                },
+                {
+                    "name": "To",
+                    "value": "Name Surname <me@email.com>"
+                },
+            ]
         }
+    }
 
 
 @pytest.fixture
 def gmail_api_get_3_response():
     return {
-            "id": "1599518a6f32a3b1",
-            "threadId": "1599518a6f32a3b1",
-            "labelIds": [
-                "UNREAD",
-                "INBOX"
-            ],
-            "snippet": "Amazon Web Services Only 1 week until AWSome Day Online Conference starts.",
-            "payload": {
-                "headers": [
-                    {
-                        "name": "Delivered-To",
-                        "value": "me@email.com"
-                    },
-                    {
-                        "name": "Delivered-To",
-                        "value": "other@email.com"
-                    },
-                    {
-                        "name": "Date",
-                        "value": "Tue, 19 Mar 2019 08:36:51 +0000 (UTC)"
-                    },
-                    {
-                        "name": "From",
-                        "value": "Amazon Web Services <aws-marketing-email-replies@amazon.com>"
-                    },
-                    {
-                        "name": "To",
-                        "value": "other@email.com"
-                    },
-                    {
-                        "name": "Subject",
-                        "value": "Don't miss your chance to join us for AWSome Day Online"
-                    },
-                    {
-                        "name": "List-Unsubscribe",
-                        "value": "<mailto:728229.239056.9@unsub-sj.mktomail.com>"
-                    },
-                ]
-            }
+        "id": "1599518a6f32a3b1",
+        "threadId": "1599518a6f32a3b1",
+        "labelIds": [
+            "UNREAD",
+            "INBOX"
+        ],
+        "internalDate": "1552984611000",
+        "snippet": "Amazon Web Services Only 1 week until AWSome Day Online Conference starts.",
+        "payload": {
+            "headers": [
+                {
+                    "name": "Delivered-To",
+                    "value": "me@email.com"
+                },
+                {
+                    "name": "Delivered-To",
+                    "value": "other@email.com"
+                },
+                {
+                    "name": "From",
+                    "value": "Amazon Web Services <aws-marketing-email-replies@amazon.com>"
+                },
+                {
+                    "name": "To",
+                    "value": "other@email.com"
+                },
+                {
+                    "name": "Subject",
+                    "value": "Don't miss your chance to join us for AWSome Day Online"
+                },
+                {
+                    "name": "List-Unsubscribe",
+                    "value": "<mailto:728229.239056.9@unsub-sj.mktomail.com>"
+                },
+            ]
         }
+    }
 
 
 @pytest.fixture

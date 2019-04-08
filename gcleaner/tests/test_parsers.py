@@ -1,5 +1,7 @@
 import datetime
 
+import pytz
+
 from gcleaner.emails.parsers import GMailEmailParser
 
 
@@ -14,7 +16,7 @@ def test_gmail_parser_parses_response_object_that_contains_all_fields(gmail_api_
         ],
         "snippet": "Amazon Web Services Only 1 week until AWSome Day Online Conference starts.",
         "delivered_to": "other@email.com",
-        "date": datetime.datetime(2019, 3, 19, 8, 36, 51, tzinfo=datetime.timezone.utc),
+        "date": datetime.datetime(2019, 3, 19, 8, 36, 51, tzinfo=pytz.UTC),
         "sender": "Amazon Web Services <aws-marketing-email-replies@amazon.com>",
         "receiver": "other@email.com",
         "subject": "Don't miss your chance to join us for AWSome Day Online",
@@ -40,7 +42,7 @@ def test_gmail_parser_parses_response_object_without_all_metadata_headers(gmail_
         ],
         "snippet": "GmailCleaner connected to your Google Account",
         "delivered_to": "me@email.com",
-        "date": datetime.datetime(2019, 3, 19, 10, 31, 21, tzinfo=datetime.timezone.utc),
+        "date": datetime.datetime(2019, 3, 19, 10, 31, 21, tzinfo=pytz.UTC),
         "sender": "Google <no-reply@accounts.google.com>",
         "receiver": "me@email.com",
         "subject": "GmailCleaner connected to your Google Account"
@@ -54,16 +56,11 @@ def test_gmail_parser_parses_response_object_without_all_metadata_headers(gmail_
 
 
 def test_gmail_parser_date_string_to_datetime_conversion():
-    dates = [
-        'Tue, 05 Feb 2019 12:37:09 -0800 (PST)',
-        'Tue, 5 Feb 2019 12:37:09 -0800 (PST)',
-        'Tue, 05 Feb 2019 12:37:09 -0800',
-        'Tue, 5 Feb 2019 12:37:09 -0800',
-    ]
-    timezone = datetime.timezone(datetime.timedelta(-1, 57600))
-    expected_date = datetime.datetime(2019, 2, 5, 12, 37, 9, tzinfo=timezone)
+    timestamp = '1552991481000'
+    expected_date = datetime.datetime(2019, 3, 19, 10, 31, 21, tzinfo=pytz.UTC)
 
-    for date in dates:
-        parsed_date = GMailEmailParser.date_from_string(date)
+    # method call
+    parsed_date = GMailEmailParser.date_from_timestamp(timestamp)
 
-        assert parsed_date == expected_date
+    # assertions
+    assert parsed_date == expected_date

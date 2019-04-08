@@ -331,8 +331,8 @@ GOOGLE_AUTH_SETTINGS = {
     ],
     'CREDENTIALS': ROOT_DIR.path('credentials.json'),
     'OAUTH2_TOKEN_ENDPOINT': 'https://oauth2.googleapis.com/token',
-    'MESSAGE_FIELDS': 'id,threadId,labelIds,snippet,payload/headers/*',
-    'METADATA_HEADERS': ['Delivered-To', 'Date', 'Subject', 'From', 'To', 'List-Unsubscribe']
+    'MESSAGE_FIELDS': 'id,threadId,labelIds,snippet,internalDate,payload/headers/*',
+    'METADATA_HEADERS': ['Delivered-To', 'Subject', 'From', 'To', 'List-Unsubscribe']
 }
 
 CORS_ORIGIN_WHITELIST = (

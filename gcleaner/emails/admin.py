@@ -5,7 +5,18 @@ from gcleaner.emails.models import Email, Label
 
 @admin.register(Email)
 class EmailAdmin(admin.ModelAdmin):
-    pass
+    list_display = [
+        'user',
+        'google_id',
+        'thread_id',
+        'sender',
+        'receiver',
+        'delivered_to',
+        'starred',
+        'important',
+        'date',
+        'list_unsubscribe'
+    ]
 
 
 @admin.register(Label)

@@ -237,7 +237,7 @@ class EmailService(object):
 
         # do not create email in case it already exists in the database
         elif not self.user.emails.filter(google_id=response['id']).exists():
-            email_dict = GMailEmailParser.parse(response)
+            email_dict = GMailEmailParser.parse(response, self.user)
             email_dict['user'] = self.user.pk
 
             try:

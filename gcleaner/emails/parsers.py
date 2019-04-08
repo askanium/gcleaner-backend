@@ -30,12 +30,13 @@ class GMailEmailParser(object):
     }
 
     @classmethod
-    def parse(cls, email):
+    def parse(cls, email, user):
         """
         Parse the email into a dict that can easily be transformed
         into an Email instance.
 
         :param {dict} email: The email object returned from GMail API.
+        :param {User} user: The owner of the email.
 
         :return: The parsed dict with only the necessary fields.
         """
@@ -53,6 +54,9 @@ class GMailEmailParser(object):
                     if header['name'] in settings.GOOGLE_AUTH_SETTINGS['METADATA_HEADERS']:
                         local_header_name = cls._google_to_local_metadata_props[header['name']]
                         result[local_header_name] = header['value']
+
+        if 'receiver' not in result:
+            result['receiver'] = user.email
 
         return result
 

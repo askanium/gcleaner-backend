@@ -34,8 +34,8 @@ class Email(models.Model):
     labels = models.ManyToManyField(Label, related_name='emails')
 
     # Soft relations
-    google_id = models.CharField(max_length=16, unique=True)
-    thread_id = models.CharField(max_length=16, unique=True)
+    google_id = models.CharField(max_length=16)
+    thread_id = models.CharField(max_length=16)
 
     # Attributes
     subject = models.TextField()
@@ -47,6 +47,9 @@ class Email(models.Model):
     important = models.BooleanField(default=False)
     date = models.DateTimeField()
     list_unsubscribe = models.TextField(blank=True)
+
+    class Meta:
+        unique_together = ['google_id', 'thread_id']
 
     def __str__(self):
         return "<Email %s>" % self.google_id

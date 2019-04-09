@@ -19,8 +19,8 @@ class Label(models.Model):
     text_color = models.CharField(max_length=10, blank=True)
     background_color = models.CharField(max_length=10, blank=True)
 
-    def __repr__(self):
-        return "<Label %s>" % self.name
+    def __str__(self):
+        return "<Label %s (%s)>" % (self.name, self.google_id)
 
 
 class Email(models.Model):

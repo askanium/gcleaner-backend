@@ -1,31 +1,20 @@
-from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from gcleaner.emails.mixins import EmailMixin
-from gcleaner.emails.models import Email
-from gcleaner.emails.serializers import EmailSerializer
 
 
-class EmailListView(EmailMixin, ListAPIView):
+class EmailListView(EmailMixin, APIView):
     """
     API view to list user emails.
     """
-    queryset = Email.objects.all()
-    serializer_class = EmailSerializer
 
-    def get_queryset(self):
-        """
-        Filter queryset to operate only on emails of the User
-        that has initiated the request.
-
-        :return: The filtered queryset.
-        """
+    def get(self, request):
         service = self.get_service()
 
-        queryset = service.retrieve_unread_emails()
+        emails = service.retrieve_unread_emails()
 
-        return queryset
+        return Response(data=emails)
 
 
 class EmailModifyView(EmailMixin, APIView):

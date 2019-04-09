@@ -1,23 +1,32 @@
 from rest_framework.test import APIClient
 
 from gcleaner.emails.mixins import EmailMixin
+from gcleaner.emails.parsers import GMailEmailParser
 from gcleaner.emails.services import EmailService
-from gcleaner.emails.views import EmailListView, EmailModifyView
+from gcleaner.emails.views import EmailModifyView, EmailListView
 
 
-def test_email_list_view_get_queryset_uses_email_service_to_retrieve_unread_emails(mocker, email, google_credentials, user):
+def test_email_list_view_get_queryset_uses_email_service_to_retrieve_unread_emails(mocker, email, google_credentials, user, gmail_api_get_1_response, gmail_api_get_2_response, gmail_api_get_3_response):
     # test setup and mocking
-    view = EmailListView()
+    mocker.patch.object(EmailListView, 'get_service')
+
+    expected_emails = []
+    for email in [gmail_api_get_1_response, gmail_api_get_2_response, gmail_api_get_3_response]:
+        expected_emails.append(GMailEmailParser.parse(email, user))
+
     email_service = mocker.Mock()
-    view.get_service = mocker.Mock()
-    view.get_service.return_value = email_service
-    email_service.retrieve_unread_emails.return_value = user.emails.all()
+    email_service.retrieve_unread_emails.return_value = expected_emails
+    EmailListView.get_service.return_value = email_service
+
+    client = APIClient()
+    client.force_authenticate(user)
 
     # method call
-    queryset = view.get_queryset()
+    response = client.get('/api/v1/messages/')
 
     # assertions
-    assert list(queryset) == list(user.emails.all())
+    assert response.status_code == 200
+    assert response.data == expected_emails
     email_service.retrieve_unread_emails.assert_called_once_with()
 
 

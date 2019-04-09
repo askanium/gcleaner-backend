@@ -17,8 +17,16 @@ class EmailAdmin(admin.ModelAdmin):
         'date',
         'list_unsubscribe'
     ]
+    filter_horizontal = ['labels']
 
 
 @admin.register(Label)
 class LabelAdmin(admin.ModelAdmin):
-    pass
+    list_display = [
+        'user',
+        'name',
+        'google_id',
+        'type',
+        'text_color',
+        'background_color'
+    ]

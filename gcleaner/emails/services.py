@@ -142,6 +142,7 @@ class EmailService(object):
         self.gmail_service = GoogleAPIService(credentials)
         self.user = user
         self.last_saved_email = self.get_last_saved_email()
+        self.emails = []
 
     def get_last_saved_email(self):
         """
@@ -169,26 +170,22 @@ class EmailService(object):
 
     def retrieve_nr_of_unread_emails(self):
         """
-        Retrieve number of unread emails locally and that are new from GMail servers.
+        Retrieve number of unread emails from GMail servers.
 
         Because GMail has a restriction in terms of the load on their servers,
         retrieving more than 50 emails requires throttling locally API calls.
 
-        In order for a better UX, this method computes the amount of emails that
-        are already retrieved from GMail API and stored in the DB *and* the new
-        emails that are on GMail servers but not locally.
+        In order for a better UX, this method computes the amount of emails
+        that are on GMail servers, so a loading animation with corresponding
+        message can be shown to the user on the frontend.
 
-        :return: A dict with number of emails stored locally and new emails on GMail.
+        :return: A dict with number of emails on GMail.
         """
         response = {}
 
-        date = self.get_date_to_retrieve_new_emails()
-
-        nr_of_local_emails = self.user.emails.exclude(labels__google_id='TRASH').count()
-        nr_of_gmail_emails = len(self.gmail_service.get_unread_emails_ids(date))
+        nr_of_gmail_emails = len(self.gmail_service.get_unread_emails_ids())
 
         response['gmail'] = nr_of_gmail_emails
-        response['local'] = nr_of_local_emails
 
         return response
 
@@ -203,20 +200,11 @@ class EmailService(object):
             4. Retrieve and return all unread emails.
         :return: A list of `gcleaner.emails.models.Email` object instances.
         """
-        date = self.get_date_to_retrieve_new_emails()
-
-        new_emails = self.gmail_service.get_unread_emails_ids(date)
+        new_emails = self.gmail_service.get_unread_emails_ids()
 
         self.gmail_service.get_emails_details(new_emails, self.gmail_service_batch_callback)
 
-        if self.last_saved_email:
-            if hasattr(self.user, 'latest_email'):
-                self.user.latest_email.email = self.last_saved_email
-                self.user.latest_email.save()
-            else:
-                LatestEmail.objects.create(user=self.user, email=self.last_saved_email)
-
-        return self.user.emails.exclude(labels__google_id='TRASH')
+        return self.emails
 
     def gmail_service_batch_callback(self, request_id, response, exception):
         """
@@ -237,21 +225,15 @@ class EmailService(object):
             print('batch callback exc', exception)
             pass
 
-        # do not create email in case it already exists in the database
-        elif not self.user.emails.filter(google_id=response['id']).exists():
+        else:
             email_dict = GMailEmailParser.parse(response, self.user)
-            email_dict['user'] = self.user.pk
 
-            try:
-                email = self.create_email_from_dict(email_dict)
-            except Label.DoesNotExist:
+            # Update labels in case there are new ones
+            user_labels = Label.objects.filter(user=self.user).values_list('google_id', flat=True)
+            if not set(email_dict['labels']).issubset(set(user_labels)):
                 self.update_labels()
-                email = self.assign_labels_to_email(email_dict)
 
-            if not self.last_saved_email or self.last_saved_email.date < email.date:
-                self.last_saved_email = email
-
-            return email
+            self.emails.append(email_dict)
 
     def assign_labels_to_email(self, email_dict):
         """

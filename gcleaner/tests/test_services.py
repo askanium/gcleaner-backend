@@ -4,6 +4,7 @@ import os
 
 from django.conf import settings
 
+import pytest
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import Resource, build
 from googleapiclient.errors import HttpError
@@ -11,8 +12,8 @@ from googleapiclient.http import HttpMockSequence, HttpMock, RequestMockBuilder
 from mock import call
 
 from gcleaner.emails.models import Label
+from gcleaner.emails.parsers import GMailEmailParser
 from gcleaner.emails.services import GoogleAPIService, EmailService
-from gcleaner.tests.factories import EmailFactory
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 
@@ -203,30 +204,21 @@ def test_email_service_get_date_to_retrieve_emails_returns_date_of_latest_email(
     assert date == '2019-03-19'
 
 
-def test_email_service_retrieve_number_of_emails_a_user_has(mocker, google_credentials, gmail_api_list_response):
-    user = mocker.Mock()
-    user.emails.exclude.return_value.count.return_value = 0
-    mocker.patch.object(EmailService, 'get_last_saved_email')
-    EmailService.get_last_saved_email.return_value = None
-
+def test_email_service_retrieve_number_of_emails_a_user_has(mocker, user, google_credentials, gmail_api_list_response):
     service = EmailService(credentials=google_credentials, user=user)
     service.gmail_service = mocker.Mock()
     service.gmail_service.get_unread_emails_ids.return_value = gmail_api_list_response
-    service.get_date_to_retrieve_new_emails = mocker.Mock()
-    service.get_date_to_retrieve_new_emails.return_value = None
 
     # method call
     response = service.retrieve_nr_of_unread_emails()
 
     # assertions
     assert response['gmail'] == 3
-    assert response['local'] == 0
-    service.get_date_to_retrieve_new_emails.assert_called_once_with()
-    service.gmail_service.get_unread_emails_ids.assert_called_once_with(None)
-    user.emails.exclude.assert_called_once_with(labels__google_id='TRASH')
-    user.emails.exclude.return_value.count.assert_called_once_with()
+    assert len(response.keys()) == 1
+    service.gmail_service.get_unread_emails_ids.assert_called_once_with()
 
 
+@pytest.mark.skip(reason='Currently saving emails from GMail API is disabled on the backend')
 def test_email_service_retrieve_number_of_emails_a_user_has_when_there_are_existing_db_emails(mocker, latest_email, google_credentials, gmail_api_list_response):
     service = EmailService(credentials=google_credentials, user=latest_email.user)
     service.gmail_service = mocker.Mock()
@@ -241,13 +233,8 @@ def test_email_service_retrieve_number_of_emails_a_user_has_when_there_are_exist
     service.gmail_service.get_unread_emails_ids.assert_called_once_with('2019-03-19')
 
 
-def test_email_service_retrieve_user_emails_for_the_first_time(user, all_labels, google_credentials, gmail_api_list_response, gmail_batch_response):
-    # pre call assertions
-    assert user.emails.exclude(labels__google_id='TRASH').count() == 0
-    assert hasattr(user, 'latest_email') is False
-
+def test_email_service_retrieve_user_emails_for_the_first_time(user, all_labels, google_credentials, gmail_api_list_response, gmail_batch_response, gmail_api_get_1_response, gmail_api_get_2_response, gmail_api_get_3_response):
     # test setup and mocking
-    EmailFactory.create_batch(20)
     service = EmailService(credentials=google_credentials, user=user)
     http = HttpMockSequence([
         ({'status': 200}, open(os.path.join(DATA_DIR, 'gmail.json'), 'rb').read()),
@@ -255,16 +242,20 @@ def test_email_service_retrieve_user_emails_for_the_first_time(user, all_labels,
         ({'status': 200, 'content-type': 'multipart/mixed; boundary=batch_ygSpAcfQXdA_AAfKEo9rkX4'}, gmail_batch_response),
     ])
     service.gmail_service.service = build('gmail', 'v1', http=http)
+    expected_emails = []
+    for email in [gmail_api_get_1_response, gmail_api_get_2_response, gmail_api_get_3_response]:
+        expected_emails.append(GMailEmailParser.parse(email, user))
 
     # method call
     emails = service.retrieve_unread_emails()
 
     # post call assertions
-    assert user.emails.exclude(labels__google_id='TRASH').count() == 3
-    assert user.latest_email.email == user.emails.order_by('-date').first()
-    assert list(emails) == list(user.emails.exclude(labels__google_id='TRASH'))
+    assert user.emails.all().count() == 0
+    assert hasattr(user, 'latest_email') is False
+    assert emails == expected_emails
 
 
+@pytest.mark.skip(reason='Currently saving emails from GMail API is disabled on the backend')
 def test_email_service_retrieve_subsequent_user_emails(user, all_labels, latest_email, google_credentials, gmail_api_list_response, gmail_batch_small_response):
     # pre call assertions
     assert user.emails.exclude(labels__google_id='TRASH').count() == 1
@@ -290,6 +281,7 @@ def test_email_service_retrieve_subsequent_user_emails(user, all_labels, latest_
     assert list(emails) == list(user.emails.exclude(labels__google_id='TRASH'))
 
 
+@pytest.mark.skip(reason='Currently saving emails from GMail API is disabled on the backend')
 def test_email_service_does_not_duplicate_emails(user, all_labels, google_credentials, gmail_api_get_3_response, gmail_api_list_response, gmail_batch_response):
     service = EmailService(credentials=google_credentials, user=user)
     service.gmail_service_batch_callback(1, gmail_api_get_3_response, None)
@@ -344,7 +336,7 @@ def test_email_service_automatically_updates_labels_from_api(user, all_labels, g
     assert user.labels.filter(google_id='INBOX').count() == 1
 
 
-def test_email_service_create_update_labels_from_api_response(mocker, user, google_credentials, label_inbox):
+def test_email_service_update_labels_from_api_response(mocker, user, google_credentials, label_inbox):
     service = EmailService(credentials=google_credentials, user=user)
 
     # pre call assertions
@@ -367,6 +359,7 @@ def test_email_service_create_update_labels_from_api_response(mocker, user, goog
     assert user.labels.all().count() == 4
 
 
+@pytest.mark.skip(reason='Currently saving emails from GMail API is disabled on the backend')
 def test_email_service_assign_labels_to_email(email, user, all_labels, google_credentials):
     service = EmailService(credentials=google_credentials, user=user)
 
@@ -385,16 +378,13 @@ def test_email_service_assign_labels_to_email(email, user, all_labels, google_cr
     assert list(email.labels.all().values_list('google_id', flat=True)) == labels
 
 
-def test_email_service_modify_emails(mocker, user, all_labels, google_credentials, gmail_api_email_1, gmail_api_email_2, gmail_api_email_3):
-    # pre call assertions
-    assert user.emails.filter(labels__google_id='TRASH').count() == 0
-
+def test_email_service_modify_emails(mocker, user, all_labels, google_credentials):
     # test setup and mocking
     service = EmailService(credentials=google_credentials, user=user)
     service.gmail_service = mocker.Mock()
     service.gmail_service.batch_modify_emails.return_value = None
     payload = {
-        'ids': [gmail_api_email_1.google_id, gmail_api_email_2.google_id],
+        'ids': ['a', 'b', 'c'],
         'addLabelIds': ['TRASH'],
         'removeLabelIds': ['INBOX']
     }
@@ -403,7 +393,5 @@ def test_email_service_modify_emails(mocker, user, all_labels, google_credential
     service.modify_emails(payload)
 
     # assertions
-    assert user.emails.all().count() == 3
+    assert user.emails.all().count() == 0
     service.gmail_service.batch_modify_emails.assert_called_once_with(payload)
-    assert user.emails.exclude(labels__google_id='TRASH').count() == 1
-    assert user.emails.filter(labels__google_id='TRASH').count() == 2

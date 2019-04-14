@@ -75,5 +75,5 @@ def test_email_modify_view(mocker, user, db):
 
     # assertions
     assert response.status_code == 200
-    assert response.data is None
+    assert response.data == ['a', 'b', 'c']
     email_service.modify_emails.assert_called_once_with(payload)

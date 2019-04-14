@@ -38,4 +38,4 @@ class EmailModifyView(EmailMixin, APIView):
             pass
             # TODO handle errors
 
-        return Response()
+        return Response(data=batch_body['ids'])

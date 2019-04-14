@@ -97,7 +97,7 @@ class GMailEmailParser(object):
         space = ' '
 
         if space in actor_str:
-            result['name'] = actor_str.rsplit(' ', maxsplit=1)[0].replace("`", "'")
+            result['name'] = actor_str.rsplit(' ', maxsplit=1)[0].replace("`", "'").replace("’", "'")
             result['email'] = actor_str.rsplit(' ', maxsplit=1)[1][1:-1]
         else:
             result['name'] = actor_str

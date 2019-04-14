@@ -52,7 +52,10 @@ class JSONWebTokenAPIView(APIView):
             jwt_token = jwt_encode_handler(payload)
 
             response_data = jwt_response_payload_handler(jwt_token, user, request)
+            response_data['user'] = user.email
+
             response = Response(response_data)
+
             if api_settings.JWT_AUTH_COOKIE:
                 expiration = (datetime.utcnow() +
                               api_settings.JWT_EXPIRATION_DELTA)

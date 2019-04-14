@@ -58,4 +58,4 @@ def test_jwt_api_view_post(google_oauth_credentials_mock, build_mock, payload_mo
     encode_mock.assert_called_once_with({'user': 'me@email.com', 'access_token': google_credentials.token, 'refresh_token': google_credentials.refresh_token})
     response_payload_mock.assert_called_once_with(jwt_token, user, request)
     assert response.status_code == status.HTTP_200_OK
-    assert response.data == {'token': jwt_token}
+    assert response.data == {'token': jwt_token, 'user': 'me@email.com'}

@@ -3,7 +3,7 @@ from rest_framework.test import APIClient
 from gcleaner.emails.mixins import EmailMixin
 from gcleaner.emails.parsers import GMailEmailParser
 from gcleaner.emails.services import EmailService
-from gcleaner.emails.views import EmailModifyView, EmailListView
+from gcleaner.emails.views import EmailModifyView, EmailListView, EmailStatsView
 
 
 def test_email_list_view_get_queryset_uses_email_service_to_retrieve_unread_emails(mocker, email, google_credentials, user, gmail_api_get_1_response, gmail_api_get_2_response, gmail_api_get_3_response):
@@ -77,3 +77,20 @@ def test_email_modify_view(mocker, user, db):
     assert response.status_code == 200
     assert response.data == ['a', 'b', 'c']
     email_service.modify_emails.assert_called_once_with(payload)
+
+
+def test_email_stats_view(mocker, user, db):
+    # test setup and mocking
+    mocker.patch.object(EmailStatsView, 'get_service')
+    email_service = mocker.Mock()
+    email_service.retrieve_nr_of_unread_emails.return_value = {'gmail': 21}
+    EmailStatsView.get_service.return_value = email_service
+    client = APIClient()
+    client.force_authenticate(user)
+
+    # method call
+    response = client.get('/api/v1/messages/stats/')
+
+    # assertions
+    assert response.status_code == 200
+    assert response.data == {'unread': 21}

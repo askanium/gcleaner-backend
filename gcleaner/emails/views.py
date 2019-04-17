@@ -39,3 +39,19 @@ class EmailModifyView(EmailMixin, APIView):
             # TODO handle errors
 
         return Response(data=batch_body['ids'])
+
+
+class EmailStatsView(EmailMixin, APIView):
+    """
+    API view to get email stats for the user.
+    """
+    def get(self, request):
+        service = self.get_service()
+
+        nr_of_emails = service.retrieve_nr_of_unread_emails()
+
+        data = {
+            'unread': nr_of_emails['gmail']
+        }
+
+        return Response(data=data)

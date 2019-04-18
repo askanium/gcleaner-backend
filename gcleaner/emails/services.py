@@ -1,3 +1,5 @@
+from time import sleep
+
 from django.conf import settings
 
 from googleapiclient import errors
@@ -143,6 +145,11 @@ class EmailService(object):
         self.user = user
         self.last_saved_email = self.get_last_saved_email()
         self.emails = []
+        self.email_ids = []
+        self.failed_requests = {}
+
+        self.exponential_backoff_delay = 1
+        self.max_backoff_delay = 16
 
     def get_last_saved_email(self):
         """
@@ -200,9 +207,15 @@ class EmailService(object):
             4. Retrieve and return all unread emails.
         :return: A list of `gcleaner.emails.models.Email` object instances.
         """
-        new_emails = self.gmail_service.get_unread_emails_ids()
+        if self.failed_requests:
+            self.email_ids = list(self.failed_requests.values())
+            self.failed_requests = {}
+        else:
+            self.email_ids = self.gmail_service.get_unread_emails_ids()
 
-        self.gmail_service.get_emails_details(new_emails, self.gmail_service_batch_callback)
+        self.gmail_service.get_emails_details(self.email_ids, self.gmail_service_batch_callback)
+
+        self._handle_failed_requests()
 
         return self.emails
 
@@ -221,9 +234,8 @@ class EmailService(object):
         :return: The created email instance or None
         """
         if exception:
-            # TODO handle exception
-            print('batch callback exc', exception)
-            pass
+            if exception.resp.status in [403, 429]:
+                self.failed_requests[request_id] = self.email_ids[int(request_id) - 1]
 
         else:
             email_dict = GMailEmailParser.parse(response, self.user)
@@ -234,6 +246,19 @@ class EmailService(object):
                 self.update_labels()
 
             self.emails.append(email_dict)
+
+    def _handle_failed_requests(self):
+        """
+        Check if there were failed requests in the batch and retry them with an
+        exponential backoff.
+        """
+        if not self.failed_requests or self.exponential_backoff_delay > self.max_backoff_delay:
+            return
+
+        sleep(self.exponential_backoff_delay)
+        self.exponential_backoff_delay *= 2
+
+        self.retrieve_unread_emails()
 
     def assign_labels_to_email(self, email_dict):
         """

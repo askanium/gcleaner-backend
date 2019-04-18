@@ -2,6 +2,7 @@ import datetime
 import json
 import os
 
+import mock
 from django.conf import settings
 
 import pytest
@@ -233,9 +234,10 @@ def test_email_service_retrieve_number_of_emails_a_user_has_when_there_are_exist
     service.gmail_service.get_unread_emails_ids.assert_called_once_with('2019-03-19')
 
 
-def test_email_service_retrieve_user_emails_for_the_first_time(user, all_labels, google_credentials, gmail_api_list_response, gmail_batch_response, gmail_api_get_1_response, gmail_api_get_2_response, gmail_api_get_3_response):
+def test_email_service_retrieve_user_emails_for_the_first_time(mocker, user, all_labels, google_credentials, gmail_api_list_response, gmail_batch_response, gmail_api_get_1_response, gmail_api_get_2_response, gmail_api_get_3_response):
     # test setup and mocking
     service = EmailService(credentials=google_credentials, user=user)
+    service._handle_failed_requests = mocker.Mock()
     http = HttpMockSequence([
         ({'status': 200}, open(os.path.join(DATA_DIR, 'gmail.json'), 'rb').read()),
         ({'status': 200}, json.dumps({'messages': gmail_api_list_response})),
@@ -253,6 +255,68 @@ def test_email_service_retrieve_user_emails_for_the_first_time(user, all_labels,
     assert user.emails.all().count() == 0
     assert hasattr(user, 'latest_email') is False
     assert emails == expected_emails
+    service._handle_failed_requests.assert_called_once_with()
+
+
+def test_email_service_retrieves_email_details_for_previously_failed_batch_requests(mocker, google_credentials, user):
+    # test setup and mocking
+    service = EmailService(credentials=google_credentials, user=user)
+    service.failed_requests = {'1': {'id': 'a'}}
+    service.gmail_service = mocker.Mock()
+
+    # method call
+    service.retrieve_unread_emails()
+
+    # assertions
+    assert service.failed_requests == {}
+    service.gmail_service.get_emails_details.assert_called_once_with([{'id': 'a'}], service.gmail_service_batch_callback)
+
+
+@mock.patch('gcleaner.emails.services.sleep')
+def test_email_service_handle_failed_requests_returns_if_no_failed_requests(sleep_mock, mocker, google_credentials, user):
+    # test setup and mocking
+    service = EmailService(credentials=google_credentials, user=user)
+    service.retrieve_unread_emails = mocker.Mock()
+
+    # method call
+    service._handle_failed_requests()
+
+    # assertions
+    sleep_mock.assert_not_called()
+    service.retrieve_unread_emails.assert_not_called()
+
+
+@mock.patch('gcleaner.emails.services.sleep')
+def test_email_service_handle_failed_requests_returns_if_backoff_delay_exceeded_max_value(sleep_mock, mocker, google_credentials, user):
+    # test setup and mocking
+    service = EmailService(credentials=google_credentials, user=user)
+    service.retrieve_unread_emails = mocker.Mock()
+    service.max_backoff_delay = 32
+
+    # method call
+    service._handle_failed_requests()
+
+    # assertions
+    sleep_mock.assert_not_called()
+    service.retrieve_unread_emails.assert_not_called()
+
+
+@mock.patch('gcleaner.emails.services.sleep')
+def test_email_service_handle_failed_requests_retrieve_email_details(sleep_mock, mocker, google_credentials, user):
+    # test setup and mocking
+    service = EmailService(credentials=google_credentials, user=user)
+    service.retrieve_unread_emails = mocker.Mock()
+    service.failed_requests = {
+        '1': {'id': 'a'}
+    }
+
+    # method call
+    service._handle_failed_requests()
+
+    # assertions
+    assert service.exponential_backoff_delay == 2
+    sleep_mock.asser_called_once_with(1)
+    service.retrieve_unread_emails.assert_called_once_with()
 
 
 @pytest.mark.skip(reason='Currently saving emails from GMail API is disabled on the backend')
@@ -279,6 +343,36 @@ def test_email_service_retrieve_subsequent_user_emails(user, all_labels, latest_
     assert user.latest_email.email == user.emails.order_by('-date').first()
     assert user.latest_email.email_id != latest_email_email_pk
     assert list(emails) == list(user.emails.exclude(labels__google_id='TRASH'))
+
+
+def test_email_service_batch_callback_populate_failed_requests_on_429_error(mocker, google_credentials, user):
+    # test setup and mocking
+    service = EmailService(credentials=google_credentials, user=user)
+    service.email_ids = [{'id': 'a'}]
+    exception = mocker.Mock()
+    exception.resp.status = 429
+
+    # method call
+    service.gmail_service_batch_callback('1', None, exception)
+
+    # assertions
+    assert len(service.emails) == 0
+    assert service.failed_requests == {'1': {'id': 'a'}}
+
+
+def test_email_service_batch_callback_populate_failed_requests_on_403_error(mocker, google_credentials, user):
+    # test setup and mocking
+    service = EmailService(credentials=google_credentials, user=user)
+    service.email_ids = [{'id': 'a'}]
+    exception = mocker.Mock()
+    exception.resp.status = 403
+
+    # method call
+    service.gmail_service_batch_callback('1', None, exception)
+
+    # assertions
+    assert len(service.emails) == 0
+    assert service.failed_requests == {'1': {'id': 'a'}}
 
 
 @pytest.mark.skip(reason='Currently saving emails from GMail API is disabled on the backend')

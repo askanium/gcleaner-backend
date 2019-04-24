@@ -27,12 +27,11 @@ def emails_exception_handler(exc, context):
     to be raised.
     """
     if isinstance(exc, RefreshError):
-        headers = {'X-Reason': 'Token Expired'}
-        data = {'detail': 'token_expired'}
+        data = {'detail': 'Token revoked.'}
 
         set_rollback()
 
-        return Response(data, status=status.HTTP_407_PROXY_AUTHENTICATION_REQUIRED, headers=headers)
+        return Response(data, status=status.HTTP_401_UNAUTHORIZED)
     else:
         return exception_handler(exc, context)
 

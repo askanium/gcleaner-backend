@@ -87,6 +87,5 @@ def test_exception_handler_handles_google_token_expired_error():
 
     # assertions
     assert isinstance(response, Response)
-    assert response.data == {'detail': 'token_expired'}
-    assert response.has_header('X-Reason')
-    assert response.status_code == 407
+    assert response.data == {'detail': 'Token revoked.'}
+    assert response.status_code == 401

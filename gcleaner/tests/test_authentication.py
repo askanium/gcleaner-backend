@@ -11,7 +11,10 @@ CREDENTIALS = {'foo': 'bar'}
 
 def test_obtain_google_oauth_credentials(mocker):
     request = mocker.Mock()
-    request.data = {'authorization_code': AUTHORIZATION_CODE}
+    request.data = {
+        'authorization_code': AUTHORIZATION_CODE,
+        'redirect_uri': 'postmessage'
+    }
 
     flow_mock = mocker.Mock()
     mocker.patch.object(Flow, 'from_client_secrets_file')

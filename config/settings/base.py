@@ -335,4 +335,5 @@ GOOGLE_AUTH_SETTINGS = {
 
 CORS_ORIGIN_WHITELIST = (
     'localhost:8080',
+    'mail.google.com'
 )

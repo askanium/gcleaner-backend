@@ -32,23 +32,42 @@ def test_obtain_google_oauth_credentials(mocker):
     assert credentials == CREDENTIALS
 
 
-@mock.patch('gcleaner.authentication.jwt.jwt_response_payload_handler')
-@mock.patch('gcleaner.authentication.jwt.jwt_encode_handler')
 @mock.patch('gcleaner.authentication.jwt.jwt_payload_handler')
+@mock.patch('gcleaner.authentication.jwt.jwt_encode_handler')
+def test_get_jwt_token_method(encode_mock, payload_mock, user, google_credentials):
+    # test setup and mocking
+    view = JSONWebTokenAPIView()
+    payload_mock.return_value = {'user': user.pk}
+    encode_mock.return_value = 1
+
+    # method call
+    jwt_token = view.get_jwt_token(user, google_credentials)
+
+    # assertions
+    assert jwt_token == 1
+    payload_mock.assert_called_once_with(user)
+    encode_mock.assert_called_once_with({
+        'user': user.pk,
+        'access_token': google_credentials.token,
+        'refresh_token': google_credentials.refresh_token
+    })
+
+
+@mock.patch('gcleaner.authentication.jwt.jwt_response_payload_handler')
 @mock.patch('gcleaner.authentication.jwt.build')
 @mock.patch('gcleaner.authentication.jwt.obtain_google_oauth_credentials')
-def test_jwt_api_view_post(google_oauth_credentials_mock, build_mock, payload_mock, encode_mock, response_payload_mock, mocker, google_credentials, user):
+def test_jwt_api_view_post(google_oauth_credentials_mock, build_mock, response_payload_mock, mocker, google_credentials, user):
     view = JSONWebTokenAPIView()
     jwt_token = 'jwt token'
     request = mocker.Mock()
     view.get_user = mocker.Mock()
     view.get_user.return_value = user
+    view.get_jwt_token = mocker.Mock()
+    view.get_jwt_token.return_value = jwt_token
     google_oauth_credentials_mock.return_value = google_credentials
     service_mock = mocker.Mock()
     build_mock.return_value = service_mock
     service_mock.users.return_value.getProfile.return_value.execute.return_value = {'emailAddress': 'me@email.com'}
-    payload_mock.return_value = {'user': 'me@email.com'}
-    encode_mock.return_value = jwt_token
     response_payload_mock.return_value = {'token': jwt_token}
 
     # method call
@@ -57,8 +76,7 @@ def test_jwt_api_view_post(google_oauth_credentials_mock, build_mock, payload_mo
     # assertions
     build_mock.assert_called_once_with('gmail', 'v1', credentials=google_credentials)
     service_mock.users.return_value.getProfile.assert_called_once_with(userId='me')
-    payload_mock.assert_called_once_with(user)
-    encode_mock.assert_called_once_with({'user': 'me@email.com', 'access_token': google_credentials.token, 'refresh_token': google_credentials.refresh_token})
+    view.get_jwt_token.assert_called_once_with(user, google_credentials)
     response_payload_mock.assert_called_once_with(jwt_token, user, request)
     assert response.status_code == status.HTTP_200_OK
     assert response.data == {'token': jwt_token, 'user': 'me@email.com'}

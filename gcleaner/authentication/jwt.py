@@ -39,17 +39,26 @@ class JSONWebTokenAPIView(APIView):
         user, created = User.objects.get_or_create(username=user_email, email=user_email)
         return user
 
+    def get_jwt_token(self, user, credentials):
+        """
+        Compute the payload and encode it into a JWT.
+        :param user: The User instance for which to encode the JWT token.
+        :param credentials: User credentials ot use with GMail API.
+        :return: The JWT token.
+        """
+        payload = jwt_payload_handler(user)
+        payload['access_token'] = credentials.token
+        payload['refresh_token'] = credentials.refresh_token
+
+        return jwt_encode_handler(payload)
+
     def post(self, request, *args, **kwargs):
         credentials = obtain_google_oauth_credentials(request)
 
         if credentials.token:
             user = self.get_user(self.get_google_user_profile(credentials))
 
-            payload = jwt_payload_handler(user)
-            payload['access_token'] = credentials.token
-            payload['refresh_token'] = credentials.refresh_token
-
-            jwt_token = jwt_encode_handler(payload)
+            jwt_token = self.get_jwt_token(user, credentials)
 
             response_data = jwt_response_payload_handler(jwt_token, user, request)
             response_data['user'] = user.email

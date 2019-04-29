@@ -54,12 +54,17 @@ class GoogleAPIService(object):
                 messages.extend(response['messages'])
 
             while 'nextPageToken' in response:
-                page_token = response['nextPageToken']
-                list_filters['pageToken'] = page_token
-                response = self.service.users().messages().list(**list_filters).execute()
-                messages.extend(response['messages'])
+                if len(messages) < 1000:
+                    page_token = response['nextPageToken']
+                    list_filters['pageToken'] = page_token
+                    response = self.service.users().messages().list(**list_filters).execute()
+                    messages.extend(response['messages'])
+                else:
+                    break
 
-            return messages
+            # Return only 1000 messages as GMail does not allow
+            # batches with more than 1000 requests in them.
+            return messages[:1000]
 
         except errors.HttpError as error:
             # TODO properly handle API errors

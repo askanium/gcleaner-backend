@@ -39,7 +39,7 @@ def test_google_resource_service_get_labeled_emails_handles_exception(mocker, go
 
 
 def test_google_resource_get_nr_of_unread_emails_since_a_specific_date(mocker, google_credentials):
-    label_ids = ['UNREAD']
+    label_ids = ['UNREAD', 'INBOX']
     emails = [
         {'id': 'a1'},
         {'id': 'a2'}
@@ -64,7 +64,7 @@ def test_google_resource_get_nr_of_unread_emails_since_a_specific_date(mocker, g
 
 
 def test_google_resource_get_nr_of_unread_emails_from_the_beginning_of_time(mocker, google_credentials):
-    label_ids = ['UNREAD']
+    label_ids = ['UNREAD', 'INBOX']
     emails = [
         {'id': 'a1'},
         {'id': 'a2'}

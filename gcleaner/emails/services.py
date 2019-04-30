@@ -79,7 +79,7 @@ class GoogleAPIService(object):
 
         :return: The list of unread emails from GMail API.
         """
-        return self.get_labeled_emails(['UNREAD'], d)
+        return self.get_labeled_emails(['UNREAD', 'INBOX'], d)
 
     def get_emails_details(self, emails, callback):
         """

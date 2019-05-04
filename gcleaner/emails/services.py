@@ -5,6 +5,7 @@ from django.conf import settings
 from googleapiclient import errors
 from googleapiclient.discovery import build
 
+from gcleaner.emails.constants import LABEL_UNREAD, LABEL_INBOX
 from gcleaner.emails.models import LatestEmail, Email, Label
 from gcleaner.emails.parsers import GMailEmailParser
 
@@ -79,7 +80,7 @@ class GoogleAPIService(object):
 
         :return: The list of unread emails from GMail API.
         """
-        return self.get_labeled_emails(['UNREAD', 'INBOX'], d)
+        return self.get_labeled_emails([LABEL_UNREAD, LABEL_INBOX], d)
 
     def get_emails_details(self, emails, callback):
         """

@@ -1,3 +1,4 @@
+from gcleaner.emails.constants import LABEL_UNREAD, LABEL_INBOX
 from gcleaner.emails.serializers import EmailSerializer
 
 
@@ -5,11 +6,11 @@ def test_email_serializer(email, label_unread, label_inbox):
     email_json = {
         'labels': [
             {
-                'google_id': 'UNREAD',
+                'google_id': LABEL_UNREAD,
                 'name': 'UNREAD'
             },
             {
-                'google_id':'INBOX',
+                'google_id': LABEL_INBOX,
                 'name': 'INBOX',
             }
         ],
@@ -25,6 +26,5 @@ def test_email_serializer(email, label_unread, label_inbox):
         'date': '2019-03-19 08:11:21+00:00'
     }
     serializer = EmailSerializer(email)
-    # serializer.is_valid()
 
     assert email_json == serializer.data

@@ -1,5 +1,6 @@
 from rest_framework.test import APIClient
 
+from gcleaner.emails.constants import LABEL_INBOX, LABEL_TRASH
 from gcleaner.emails.mixins import EmailMixin
 from gcleaner.emails.parsers import GMailEmailParser
 from gcleaner.emails.services import EmailService
@@ -63,8 +64,8 @@ def test_email_modify_view(mocker, user, db):
     EmailModifyView.get_service.return_value = email_service
     payload = {
         'ids': ['a', 'b', 'c'],
-        'addLabelIds': ['TRASH'],
-        'removeLabelIds': ['INBOX']
+        'addLabelIds': [LABEL_TRASH],
+        'removeLabelIds': [LABEL_INBOX]
     }
     email_service.modify_emails.return_value = None
     client = APIClient()

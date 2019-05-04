@@ -1,5 +1,6 @@
 import datetime
 
+from gcleaner.emails.constants import LABEL_INBOX
 from gcleaner.emails.models import Email, Label
 from gcleaner.users.models import User
 
@@ -95,7 +96,7 @@ def test_email_model_from_dict_with_missing_boolean_props(user, label_inbox, lab
 
 def test_label_creation_of_system_type(user):
     label = Label.objects.create(user=user,
-                                 google_id='INBOX',
+                                 google_id=LABEL_INBOX,
                                  type='system',
                                  name='INBOX')
     assert label.pk is not None

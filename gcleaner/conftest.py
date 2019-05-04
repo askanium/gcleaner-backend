@@ -2,6 +2,7 @@ import json
 import pytest
 from google.oauth2.credentials import Credentials
 
+from gcleaner.emails.constants import LABEL_UNREAD, LABEL_INBOX, LABEL_TRASH
 from gcleaner.emails.models import Label, Email, LatestEmail
 from gcleaner.emails.services import EmailService
 from gcleaner.users.models import User
@@ -15,13 +16,13 @@ def user(db):
 
 @pytest.fixture
 def label_unread(user, db):
-    label = Label.objects.create(user=user, google_id='UNREAD', name='UNREAD', type='system')
+    label = Label.objects.create(user=user, google_id=LABEL_UNREAD, name='UNREAD', type='system')
     return label
 
 
 @pytest.fixture
 def label_inbox(user, db):
-    label = Label.objects.create(user=user, google_id='INBOX', name='INBOX', type='system')
+    label = Label.objects.create(user=user, google_id=LABEL_INBOX, name='INBOX', type='system')
     return label
 
 
@@ -39,7 +40,7 @@ def label_custom_category(user, db):
 
 @pytest.fixture
 def label_trash(user, db):
-    label = Label.objects.create(user=user, google_id='TRASH', name='TRASH', type='system')
+    label = Label.objects.create(user=user, google_id=LABEL_TRASH, name='TRASH', type='system')
     return label
 
 

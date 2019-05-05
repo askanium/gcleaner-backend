@@ -11,7 +11,10 @@ class LabelSerializer(serializers.ModelSerializer):
         model = Label
         fields = [
             'google_id',
-            'name'
+            'name',
+            'type',
+            'text_color',
+            'background_color'
         ]
 
 

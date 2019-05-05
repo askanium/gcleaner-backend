@@ -8,6 +8,7 @@ from googleapiclient.discovery import build
 from gcleaner.emails.constants import LABEL_UNREAD, LABEL_INBOX
 from gcleaner.emails.models import LatestEmail, Email, Label
 from gcleaner.emails.parsers import GMailEmailParser
+from gcleaner.emails.serializers import LabelSerializer
 
 
 class GoogleAPIService(object):
@@ -148,6 +149,7 @@ class EmailService(object):
     """
     def __init__(self, credentials, user):
         self.gmail_service = GoogleAPIService(credentials)
+        self.email_label_serializer = LabelSerializer
         self.user = user
         self.last_saved_email = self.get_last_saved_email()
         self.emails = []
@@ -251,6 +253,8 @@ class EmailService(object):
             if not set(email_dict['labels']).issubset(set(user_labels)):
                 self.update_labels()
 
+            self._populate_with_serialized_labels(email_dict)
+
             self.emails.append(email_dict)
 
     def _handle_failed_requests(self):
@@ -265,6 +269,22 @@ class EmailService(object):
         self.exponential_backoff_delay *= 2
 
         self.retrieve_unread_emails()
+
+    def _populate_with_serialized_labels(self, email_dict):
+        """
+        Swap label ids with serialized Label instances on the email dict.
+
+        :param email_dict: The dict that contains all the info about the email.
+
+        :return: The updated email instance.
+        """
+        serialized_labels = []
+        for label_id in email_dict['labels']:
+            label = Label.objects.get(user=self.user, google_id=label_id)
+            serializer = self.email_label_serializer(label)
+            serialized_labels.append(serializer.data)
+
+        email_dict['labels'] = serialized_labels
 
     def assign_labels_to_email(self, email_dict):
         """

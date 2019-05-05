@@ -34,7 +34,7 @@ def label_category_personal(user, db):
 
 @pytest.fixture
 def label_custom_category(user, db):
-    label = Label.objects.create(user=user, google_id='Label_35', name='Custom Label', type='user')
+    label = Label.objects.create(user=user, google_id='Label_35', name='Custom Label', type='user', text_color='#222', background_color='#ddd')
     return label
 
 

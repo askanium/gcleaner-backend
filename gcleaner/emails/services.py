@@ -6,7 +6,7 @@ from googleapiclient import errors
 from googleapiclient.discovery import build
 
 from gcleaner.emails.constants import LABEL_UNREAD, LABEL_INBOX
-from gcleaner.emails.models import LatestEmail, Email, Label
+from gcleaner.emails.models import LatestEmail, Email, Label, LockedEmail
 from gcleaner.emails.parsers import GMailEmailParser
 from gcleaner.emails.serializers import LabelSerializer
 
@@ -350,3 +350,13 @@ class EmailService(object):
         else:
             return errs
 
+    def lock_email(self, payload):
+        """
+        Changes the `locked` state of the given email in the database.
+        :param payload: The google_id, thread_id and locked value to assign to the email.
+        """
+        email, created = LockedEmail.objects.get_or_create(user=self.user,
+                                                           google_id=payload['google_id'],
+                                                           thread_id=payload['thread_id'])
+        email.locked = payload['locked']
+        email.save()

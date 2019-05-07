@@ -55,3 +55,15 @@ class EmailStatsView(EmailMixin, APIView):
         }
 
         return Response(data=data)
+
+
+class EmailLockView(EmailMixin, APIView):
+    """
+    API view to lock emails in order to not do anything with them accidentally.
+    """
+    def post(self, request):
+        service = self.get_service()
+
+        service.lock_email(request.data)
+
+        return Response()

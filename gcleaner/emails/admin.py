@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from gcleaner.emails.models import Email, Label
+from gcleaner.emails.models import Email, Label, LockedEmail
 
 
 @admin.register(Email)
@@ -29,4 +29,14 @@ class LabelAdmin(admin.ModelAdmin):
         'type',
         'text_color',
         'background_color'
+    ]
+
+
+@admin.register(LockedEmail)
+class LockedEmailAdmin(admin.ModelAdmin):
+    list_display = [
+        'user',
+        'google_id',
+        'thread_id',
+        'locked'
     ]

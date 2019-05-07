@@ -90,3 +90,21 @@ class LatestEmail(models.Model):
 
     def __str__(self):
         return "<LatestEmail %s>" % self.email
+
+
+class LockedEmail(models.Model):
+    """
+    Basic model to contain email id and locked status.
+    """
+    # Relations
+    user = models.ForeignKey(User, related_name='locked_emails', on_delete=models.CASCADE)
+
+    # Soft relations
+    google_id = models.CharField(max_length=16)
+    thread_id = models.CharField(max_length=16)
+
+    # Attributes
+    locked = models.BooleanField(default=False)
+
+    def __str__(self):
+        return "<Locked Email %s: %s>" % (self.google_id, self.locked)

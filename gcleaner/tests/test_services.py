@@ -13,7 +13,7 @@ from googleapiclient.http import HttpMockSequence, HttpMock, RequestMockBuilder
 from mock import call
 
 from gcleaner.emails.constants import LABEL_UNREAD, LABEL_INBOX, LABEL_TRASH
-from gcleaner.emails.models import Label
+from gcleaner.emails.models import Label, LockedEmail
 from gcleaner.emails.parsers import GMailEmailParser
 from gcleaner.emails.serializers import LabelSerializer
 from gcleaner.emails.services import GoogleAPIService, EmailService
@@ -552,3 +552,44 @@ def test_email_service_populate_email_dict_with_serialized_labels(user, google_c
             'background_color': '#ddd'
         }
     ]
+
+
+def test_email_service_lock_email_create_locked_email(user, google_credentials):
+    # test setup
+    service = EmailService(credentials=google_credentials, user=user)
+    payload = {
+        'google_id': 'g123',
+        'thread_id': 't123',
+        'locked': True
+    }
+
+    # method call
+    service.lock_email(payload)
+    locked_email = LockedEmail.objects.last()
+
+    # assertions
+    assert LockedEmail.objects.count() == 1
+    assert locked_email.google_id == 'g123'
+    assert locked_email.thread_id == 't123'
+    assert locked_email.locked is True
+    assert locked_email.user == user
+
+
+def test_email_service_lock_email_update_existing_locked_email(user, google_credentials):
+    # test setup
+    service = EmailService(credentials=google_credentials, user=user)
+    payload = {
+        'google_id': 'g123',
+        'thread_id': 't123',
+        'locked': True,
+    }
+    LockedEmail.objects.create(user=user, **payload)
+    payload['locked'] = False
+
+    # method call
+    service.lock_email(payload)
+    locked_email = LockedEmail.objects.last()
+
+    # assertions
+    assert LockedEmail.objects.count() == 1
+    assert locked_email.locked is False

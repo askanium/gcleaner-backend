@@ -4,7 +4,7 @@ from gcleaner.emails.constants import LABEL_INBOX, LABEL_TRASH
 from gcleaner.emails.mixins import EmailMixin
 from gcleaner.emails.parsers import GMailEmailParser
 from gcleaner.emails.services import EmailService
-from gcleaner.emails.views import EmailModifyView, EmailListView, EmailStatsView
+from gcleaner.emails.views import EmailModifyView, EmailListView, EmailStatsView, EmailLockView
 
 
 def test_email_list_view_get_queryset_uses_email_service_to_retrieve_unread_emails(mocker, email, google_credentials, user, gmail_api_get_1_response, gmail_api_get_2_response, gmail_api_get_3_response):
@@ -95,3 +95,20 @@ def test_email_stats_view(mocker, user, db):
     # assertions
     assert response.status_code == 200
     assert response.data == {'unread': 21}
+
+
+def test_email_lock_view(mocker, user, db):
+    # test setup and mocking
+    mocker.patch.object(EmailLockView, 'get_service')
+    payload = {'google_id': 'g123', 'thread_id': 't123', 'locked': True}
+    email_service = mocker.Mock()
+    EmailLockView.get_service.return_value = email_service
+    client = APIClient()
+    client.force_authenticate(user)
+
+    # method call
+    response = client.post(f'/api/v1/messages/lock/', data=payload, format='json')
+
+    # assertions
+    assert response.status_code == 200
+    email_service.lock_email.assert_called_once_with(payload)

@@ -24,7 +24,8 @@ def test_gmail_parser_parses_response_object_that_contains_all_fields(user, gmai
         },
         "receiver": "other@email.com",
         "subject": "Don't miss your chance to join us for AWSome Day Online",
-        "list_unsubscribe": "<mailto:728229.239056.9@unsub-sj.mktomail.com>"
+        "list_unsubscribe": "<mailto:728229.239056.9@unsub-sj.mktomail.com>",
+        "locked": False
     }
 
     # method call
@@ -53,7 +54,8 @@ def test_gmail_parser_parses_response_object_without_all_metadata_headers(user, 
             "domain": "accounts.google.com"
         },
         "receiver": "me@email.com",
-        "subject": "GmailCleaner connected to your Google Account"
+        "subject": "GmailCleaner connected to your Google Account",
+        "locked": False
     }
 
     # method call
@@ -94,7 +96,8 @@ def test_parser_automatically_adds_receiver_if_absent(user, gmail_api_get_1_resp
             "domain": "accounts.google.com"
         },
         "receiver": "me@email.com",
-        "subject": "GmailCleaner connected to your Google Account"
+        "subject": "GmailCleaner connected to your Google Account",
+        "locked": False
     }
 
     # method call
@@ -125,7 +128,8 @@ def test_parser_correctly_parse_email_sender_actor_when_it_has_only_email(user, 
             "domain": "accounts.google.com"
         },
         "receiver": "me@email.com",
-        "subject": "GmailCleaner connected to your Google Account"
+        "subject": "GmailCleaner connected to your Google Account",
+        "locked": False
     }
 
     # method call
@@ -155,7 +159,8 @@ def test_parser_correctly_parse_email_sender_actor_when_it_has_quotation_marks_a
             "domain": "email.com"
         },
         "receiver": "me@email.com",
-        "subject": "GmailCleaner connected to your Google Account"
+        "subject": "GmailCleaner connected to your Google Account",
+        "locked": False
     }
 
     # method call

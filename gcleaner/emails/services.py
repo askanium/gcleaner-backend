@@ -248,6 +248,13 @@ class EmailService(object):
         else:
             email_dict = GMailEmailParser.parse(response, self.user)
 
+            # Add "locked" attribute in case the email was previously locked in by the user.
+            try:
+                locked_email = LockedEmail.objects.get(user=self.user, google_id=email_dict['google_id'])
+                email_dict['locked'] = locked_email.locked
+            except LockedEmail.DoesNotExist:
+                email_dict['locked'] = False
+
             # Update labels in case there are new ones
             user_labels = Label.objects.filter(user=self.user).values_list('google_id', flat=True)
             if not set(email_dict['labels']).issubset(set(user_labels)):

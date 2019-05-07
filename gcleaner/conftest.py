@@ -3,7 +3,7 @@ import pytest
 from google.oauth2.credentials import Credentials
 
 from gcleaner.emails.constants import LABEL_UNREAD, LABEL_INBOX, LABEL_TRASH
-from gcleaner.emails.models import Label, Email, LatestEmail
+from gcleaner.emails.models import Label, Email, LatestEmail, LockedEmail
 from gcleaner.emails.services import EmailService
 from gcleaner.users.models import User
 
@@ -241,6 +241,15 @@ def gmail_api_list_response():
     ]
 
     return emails
+
+
+@pytest.fixture
+def locked_email(user, gmail_api_email_1):
+    locked_email = LockedEmail.objects.create(user=user,
+                                              google_id=gmail_api_email_1['google_id'],
+                                              thread_id=gmail_api_email_1['thread_id'],
+                                              locked=True)
+    return locked_email
 
 
 @pytest.fixture

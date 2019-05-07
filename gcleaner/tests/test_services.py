@@ -274,6 +274,34 @@ def test_email_service_retrieve_user_emails_for_the_first_time(mocker, user, all
     service._handle_failed_requests.assert_called_once_with()
 
 
+def test_email_service_retrieve_user_emails_with_existing_locked_emails(mocker, user, all_labels, google_credentials, gmail_api_list_response, gmail_batch_response, gmail_api_get_1_response, gmail_api_get_2_response, gmail_api_get_3_response, locked_email):
+    # test setup and mocking
+    service = EmailService(credentials=google_credentials, user=user)
+    service._handle_failed_requests = mocker.Mock()
+    http = HttpMockSequence([
+        ({'status': 200}, open(os.path.join(DATA_DIR, 'gmail.json'), 'rb').read()),
+        ({'status': 200}, json.dumps({'messages': gmail_api_list_response})),
+        ({'status': 200, 'content-type': 'multipart/mixed; boundary=batch_ygSpAcfQXdA_AAfKEo9rkX4'}, gmail_batch_response),
+    ])
+    service.gmail_service.service = build('gmail', 'v1', http=http)
+    expected_emails = []
+    for email in [gmail_api_get_1_response, gmail_api_get_2_response, gmail_api_get_3_response]:
+        email_dict = GMailEmailParser.parse(email, user)
+        service._populate_with_serialized_labels(email_dict)
+        expected_emails.append(email_dict)
+        if email_dict['google_id'] == locked_email.google_id:
+            email_dict['locked'] = True
+
+    # method call
+    emails = service.retrieve_unread_emails()
+
+    # post call assertions
+    assert user.emails.all().count() == 0
+    assert hasattr(user, 'latest_email') is False
+    assert emails == expected_emails
+    service._handle_failed_requests.assert_called_once_with()
+
+
 def test_email_service_retrieves_email_details_for_previously_failed_batch_requests(mocker, google_credentials, user):
     # test setup and mocking
     service = EmailService(credentials=google_credentials, user=user)

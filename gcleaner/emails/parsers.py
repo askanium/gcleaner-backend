@@ -42,7 +42,9 @@ class GMailEmailParser(object):
 
         :return: The parsed dict with only the necessary fields.
         """
-        result = {}
+        result = {
+            'locked': False
+        }
 
         for key, value in email.items():
             if key in cls._google_to_local_props:

@@ -249,7 +249,7 @@ LOGGING = {
         'django_file': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
-            'filename': '/var/log/django/django.log',
+            'filename': '/home/ubuntu/gcleaner-logs/django.log',
             'formatter': 'verbose'
         },
     },

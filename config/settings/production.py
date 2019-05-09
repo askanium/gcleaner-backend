@@ -149,7 +149,7 @@ LOGGING = {
         'django_file': {
             'level': 'INFO',
             'class': 'logging.FileHandler',
-            'filename': '~/gcleaner-logs/django.log',
+            'filename': '/var/log/django/django.log',
             'formatter': 'verbose'
         },
     },

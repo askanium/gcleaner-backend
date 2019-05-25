@@ -80,3 +80,20 @@ def test_jwt_api_view_post(google_oauth_credentials_mock, build_mock, response_p
     response_payload_mock.assert_called_once_with(jwt_token, user, request)
     assert response.status_code == status.HTTP_200_OK
     assert response.data == {'token': jwt_token, 'user': 'me@email.com'}
+
+
+@mock.patch('gcleaner.authentication.jwt.obtain_google_oauth_credentials')
+def test_jwt_user_did_not_allow_proper_scopes_to_modify_emails_returns_message(google_oauth_credentials_mock, mocker):
+    view = JSONWebTokenAPIView()
+    request = mocker.Mock()
+    warning = Warning('message')
+    warning.old_scope = ['user', 'email', 'openid']
+    warning.new_scope = ['user', 'openid']
+    google_oauth_credentials_mock.side_effect = warning
+
+    # method call
+    response = view.post(request)
+
+    # assertions
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.data == {'message': 'It seems you did not give GCleaner permission to modify emails. Please try again.'}

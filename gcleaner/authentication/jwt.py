@@ -53,7 +53,16 @@ class JSONWebTokenAPIView(APIView):
         return jwt_encode_handler(payload)
 
     def post(self, request, *args, **kwargs):
-        credentials = obtain_google_oauth_credentials(request)
+        try:
+            credentials = obtain_google_oauth_credentials(request)
+        except Warning as w:
+            if hasattr(w, 'old_scope') and hasattr(w, 'new_scope') and set(w.old_scope).difference(set(w.new_scope)) != set():
+                return Response(
+                    {'message': 'It seems you did not give GCleaner permission to modify emails. Please try again.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            else:
+                raise w
 
         if credentials.token:
             user = self.get_user(self.get_google_user_profile(credentials))

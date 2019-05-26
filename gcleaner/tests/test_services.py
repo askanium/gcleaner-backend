@@ -12,8 +12,8 @@ from googleapiclient.errors import HttpError
 from googleapiclient.http import HttpMockSequence, HttpMock, RequestMockBuilder
 from mock import call
 
-from gcleaner.emails.constants import LABEL_UNREAD, LABEL_INBOX, LABEL_TRASH
-from gcleaner.emails.models import Label, LockedEmail
+from gcleaner.emails.constants import LABEL_UNREAD, LABEL_INBOX, LABEL_TRASH, ACTION_TRASH
+from gcleaner.emails.models import Label, LockedEmail, ModifiedEmailBatch
 from gcleaner.emails.parsers import GMailEmailParser
 from gcleaner.emails.serializers import LabelSerializer
 from gcleaner.emails.services import GoogleAPIService, EmailService
@@ -423,6 +423,20 @@ def test_email_service_batch_callback_populate_failed_requests_on_403_error(mock
     assert not service._populate_with_serialized_labels.called
 
 
+def test_email_service_batch_callback_marks_email_as_locked_if_locked_email_in_database(mocker, google_credentials, locked_email, gmail_api_get_1_response, all_labels, user):
+    # test setup and mocking
+    service = EmailService(credentials=google_credentials, user=user)
+    service.email_ids = [{'id': locked_email.google_id}]
+    service._populate_with_serialized_labels = mocker.Mock()
+
+    # method call
+    service.gmail_service_batch_callback('1', gmail_api_get_1_response, None)
+
+    # assertions
+    assert len(service.emails) == 1
+    assert service.emails[0]['locked'] is True
+
+
 @pytest.mark.skip(reason='Currently saving emails from GMail API is disabled on the backend')
 def test_email_service_does_not_duplicate_emails(mocker, user, all_labels, google_credentials, gmail_api_get_3_response, gmail_api_list_response, gmail_batch_response):
     service = EmailService(credentials=google_credentials, user=user)
@@ -537,7 +551,10 @@ def test_email_service_modify_emails(mocker, user, all_labels, google_credential
     service.modify_emails(payload)
 
     # assertions
+    modified_batch = ModifiedEmailBatch.objects.last()
     assert user.emails.all().count() == 0
+    assert modified_batch.nr_of_emails == 3
+    assert modified_batch.action == ACTION_TRASH
     service.gmail_service.batch_modify_emails.assert_called_once_with(payload)
 
 

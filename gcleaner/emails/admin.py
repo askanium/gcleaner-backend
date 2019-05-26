@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from gcleaner.emails.models import Email, Label, LockedEmail
+from gcleaner.emails.models import Email, Label, LockedEmail, ModifiedEmailBatch
 
 
 @admin.register(Email)
@@ -39,4 +39,14 @@ class LockedEmailAdmin(admin.ModelAdmin):
         'google_id',
         'thread_id',
         'locked'
+    ]
+
+
+@admin.register(ModifiedEmailBatch)
+class ModifiedEmailBatchAdmin(admin.ModelAdmin):
+    list_display = [
+        'user',
+        'nr_of_emails',
+        'action',
+        'date'
     ]

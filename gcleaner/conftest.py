@@ -200,7 +200,7 @@ def gmail_api_get_3_response():
 
 
 @pytest.fixture
-def gmail_api_email_1(user, google_credentials, gmail_api_get_1_response):
+def gmail_api_email_1(user, google_credentials, gmail_api_get_1_response, all_labels):
     service = EmailService(credentials=google_credentials, user=user)
     service.gmail_service_batch_callback(1, gmail_api_get_1_response, None)
     email = service.emails[-1]
@@ -208,7 +208,7 @@ def gmail_api_email_1(user, google_credentials, gmail_api_get_1_response):
 
 
 @pytest.fixture
-def gmail_api_email_2(user, google_credentials, gmail_api_get_2_response):
+def gmail_api_email_2(user, google_credentials, gmail_api_get_2_response, all_labels):
     service = EmailService(credentials=google_credentials, user=user)
     service.gmail_service_batch_callback(2, gmail_api_get_2_response, None)
     email = service.emails[-1]
@@ -216,7 +216,7 @@ def gmail_api_email_2(user, google_credentials, gmail_api_get_2_response):
 
 
 @pytest.fixture
-def gmail_api_email_3(user, google_credentials, gmail_api_get_3_response):
+def gmail_api_email_3(user, google_credentials, gmail_api_get_3_response, all_labels):
     service = EmailService(credentials=google_credentials, user=user)
     service.gmail_service_batch_callback(3, gmail_api_get_3_response, None)
     email = service.emails[-1]

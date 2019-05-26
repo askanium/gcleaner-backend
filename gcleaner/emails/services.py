@@ -5,8 +5,8 @@ from django.conf import settings
 from googleapiclient import errors
 from googleapiclient.discovery import build
 
-from gcleaner.emails.constants import LABEL_UNREAD, LABEL_INBOX
-from gcleaner.emails.models import LatestEmail, Email, Label, LockedEmail
+from gcleaner.emails.constants import LABEL_UNREAD, LABEL_INBOX, ACTION_TRASH, ACTION_READ, ACTION_ARCHIVE
+from gcleaner.emails.models import LatestEmail, Email, Label, LockedEmail, ModifiedEmailBatch
 from gcleaner.emails.parsers import GMailEmailParser
 from gcleaner.emails.serializers import LabelSerializer
 
@@ -354,6 +354,17 @@ class EmailService(object):
             for email in emails:
                 email.labels.add(*add_labels)
                 email.labels.remove(*remove_labels)
+
+            # Create a ModifiedEmailBatch instance to keep track of user activity.
+            if ACTION_TRASH in payload['addLabelIds']:
+                action = ACTION_TRASH
+            elif ACTION_READ in payload['removeLabelIds']:
+                action = ACTION_READ
+            else:
+                action = ACTION_ARCHIVE
+            ModifiedEmailBatch.objects.create(user=self.user,
+                                              nr_of_emails=len(payload['ids']),
+                                              action=action)
         else:
             return errs
 

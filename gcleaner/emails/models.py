@@ -1,5 +1,6 @@
 from django.db import models
 
+from gcleaner.emails.constants import MODIFY_EMAIL_ACTIONS
 from gcleaner.users.models import User
 
 
@@ -108,3 +109,19 @@ class LockedEmail(models.Model):
 
     def __str__(self):
         return "<Locked Email %s: %s>" % (self.google_id, self.locked)
+
+
+class ModifiedEmailBatch(models.Model):
+    """
+    Basic model to contain modified emails details.
+    """
+    # Relations
+    user = models.ForeignKey(User, related_name='deleted_emails', on_delete=models.CASCADE)
+
+    # Attributes
+    nr_of_emails = models.PositiveSmallIntegerField()
+    date = models.DateTimeField(auto_now_add=True)
+    action = models.CharField(max_length=10, choices=MODIFY_EMAIL_ACTIONS)
+
+    def __str__(self):
+        return "<ModifiedEmailBatch %s emails %s on %s by %s>" % (self.nr_of_emails, self.action, self.date, self.user)

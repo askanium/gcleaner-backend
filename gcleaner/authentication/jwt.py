@@ -34,10 +34,11 @@ class JSONWebTokenAPIView(APIView):
         """
         Retrieve the user based on the email address.
 
-        :return: User instance.
+        :return: A tuple consisting of the User instance and whether
+        it was created or retrieved.
         """
         user, created = User.objects.get_or_create(username=user_email, email=user_email)
-        return user
+        return user, created
 
     def get_jwt_token(self, user, credentials):
         """
@@ -65,12 +66,13 @@ class JSONWebTokenAPIView(APIView):
                 raise w
 
         if credentials.token:
-            user = self.get_user(self.get_google_user_profile(credentials))
+            user, created = self.get_user(self.get_google_user_profile(credentials))
 
             jwt_token = self.get_jwt_token(user, credentials)
 
             response_data = jwt_response_payload_handler(jwt_token, user, request)
             response_data['user'] = user.email
+            response_data['show_tour'] = created
 
             response = Response(response_data)
 

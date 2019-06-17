@@ -61,7 +61,7 @@ def test_jwt_api_view_post(google_oauth_credentials_mock, build_mock, response_p
     jwt_token = 'jwt token'
     request = mocker.Mock()
     view.get_user = mocker.Mock()
-    view.get_user.return_value = user
+    view.get_user.return_value = (user, False)
     view.get_jwt_token = mocker.Mock()
     view.get_jwt_token.return_value = jwt_token
     google_oauth_credentials_mock.return_value = google_credentials
@@ -79,7 +79,7 @@ def test_jwt_api_view_post(google_oauth_credentials_mock, build_mock, response_p
     view.get_jwt_token.assert_called_once_with(user, google_credentials)
     response_payload_mock.assert_called_once_with(jwt_token, user, request)
     assert response.status_code == status.HTTP_200_OK
-    assert response.data == {'token': jwt_token, 'user': 'me@email.com'}
+    assert response.data == {'token': jwt_token, 'user': 'me@email.com', 'show_tour': False}
 
 
 @mock.patch('gcleaner.authentication.jwt.obtain_google_oauth_credentials')
